@@ -1,0 +1,24 @@
+services:
+  users-service:
+    build:
+      context: ./users-service
+      dockerfile: docker/dockerfile
+    container_name: users-service
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/users_db
+    depends_on:
+      - mongo
+    ports:
+      - "8080:8080"
+
+  mongo:
+    image: mongo:7.0.2
+    container_name: users-mongo
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongo_data:

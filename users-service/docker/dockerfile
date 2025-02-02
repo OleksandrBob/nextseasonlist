@@ -1,0 +1,15 @@
+FROM golang:1.23-alpine AS builder
+ENV GOOS=linux \
+    GOARCH=amd64
+WORKDIR /app
+COPY ../go.mod ./
+RUN go mod download
+COPY ../ .
+WORKDIR /app/cmd
+RUN go build -o server main.go
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /app/cmd/server .
+EXPOSE 8080
+CMD ["./server"]
