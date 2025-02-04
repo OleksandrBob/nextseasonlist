@@ -6,6 +6,7 @@ services:
     container_name: users-service
     environment:
       - MONGO_URI=mongodb://mongo:27017/users_db
+      - PORT=8080
     depends_on:
       - mongo
     ports:
@@ -17,8 +18,10 @@ services:
     restart: always
     volumes:
       - mongo_data:/data/db
+      - mongo_config:/data/configdb
     ports:
       - "27017:27017"
 
 volumes:
   mongo_data:
+  mongo_config:
