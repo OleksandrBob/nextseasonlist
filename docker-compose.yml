@@ -5,8 +5,9 @@ services:
       dockerfile: docker/dockerfile
     container_name: users-service
     environment:
-      - MONGO_URI=mongodb://mongo:27017/users_db
       - PORT=8080
+      - MONGO_URI=mongodb://mongo:27017/users_db
+      - JWT_SECRET=super_secret_key_for_user_service
     depends_on:
       - mongo
     ports:

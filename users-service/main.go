@@ -1,17 +1,16 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/OleksandrBob/nextseasonlist/users-service/internal/handlers"
+	"github.com/OleksandrBob/nextseasonlist/users-service/db"
+	"github.com/OleksandrBob/nextseasonlist/users-service/handlers"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var userCollection *mongo.Collection
@@ -28,15 +27,12 @@ func main() {
 		return
 	}
 
-	clientOptions := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	err = db.ConnectDb(mongoURI)
 	if err != nil {
-		log.Fatal("MongoDB connection error:", err)
 		return
 	}
 
-	userCollection = client.Database("users_db").Collection("users")
-
+	userCollection = db.GetCollection("users_db", "users")
 	authHandler := handlers.NewAuthHandler(userCollection)
 
 	router := gin.Default()
@@ -46,7 +42,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "Welcome to Users Service!"})
 	})
 	router.POST("/register", authHandler.RegisterUser)
-	router.POST("/login", loginUser)
+	router.POST("/login", authHandler.LoginUser)
 
 	port := os.Getenv("PORT")
 	if port == "" {
