@@ -68,26 +68,62 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 
 	var userInDb models.User
 	err = h.UserCollection.FindOne(ctx, bson.M{"email": userLoginInput.Email}).Decode(&userInDb)
+	if err == mongo.ErrNoDocuments {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-			return
-		}
-
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
-
 	if !utils.CheckPasswordHash(userLoginInput.Password, userInDb.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
 
-	accessToken, refreshToken, err := utils.GenerateTokens(userInDb.ID.Hex())
+	userId := userInDb.ID.Hex()
+	accessToken, err := utils.GenerateAccessToken(userId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate tokens"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate access token"})
+		return
+	}
+	refreshToken, err := utils.GenerateRefreshToken(userId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate refresh token"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken, "refreshToken": refreshToken})
+	c.SetCookie("refreshToken", refreshToken, 7*24*60*60, "", "localhost", true, true)
+	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken})
+}
+
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	refreshToken := ""
+	for _, cookie := range c.Request.Cookies() {
+		if cookie.Name == "refreshToken" { //TODO && cookie.HttpOnly
+			refreshToken = cookie.Value
+			break
+		}
+	}
+	if refreshToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token missing"})
+		return
+	}
+
+	claims, err := utils.ValidateRefreshToken(refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+
+	userID := claims["user_id"].(string)
+	newAccessToken, err := utils.GenerateAccessToken(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate access token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"access_token": newAccessToken,
+	})
 }

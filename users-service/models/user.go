@@ -7,8 +7,3 @@ type User struct {
 	Email    string             `bson:"email" json:"email" binding:"required,email"`
 	Password string             `bson:"password" json:"password,omitempty" binding:"required,min=6"`
 }
-
-type UserLoginInput struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
