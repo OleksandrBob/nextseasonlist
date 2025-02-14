@@ -14,7 +14,7 @@ var refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
 func GenerateAccessToken(userID string) (string, error) {
 	calims := jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(time.Minute * 1).Unix(),
+		"exp":     time.Now().Add(time.Minute * 10).Unix(),
 	}
 	return generateToken(calims, accessTokenSecret)
 }

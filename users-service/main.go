@@ -34,18 +34,22 @@ func main() {
 
 	userCollection = db.GetCollection("users_db", "users")
 	authHandler := handlers.NewAuthHandler(userCollection)
+	profileHandler := handlers.NewProfileHandler(userCollection)
 
 	router := gin.Default()
 	router.Use(gin.Logger())
 
-	router.POST("/login", authHandler.LoginUser)
-	router.POST("/register", authHandler.RegisterUser)
-	router.POST("/refreshToken", authHandler.RefreshToken)
-
-	profileRoutes := router.Group("/")
-	profileRoutes.Use(middlewares.AuthMiddleware())
+	authRoutes := router.Group("/auth")
 	{
-		profileRoutes.GET("/profile", handlers.ProfileHandler)
+		authRoutes.POST("/login", authHandler.LoginUser)
+		authRoutes.POST("/register", authHandler.RegisterUser)
+		authRoutes.POST("/refreshToken", authHandler.RefreshToken)
+	}
+
+	profileRoutes := router.Group("/profile", middlewares.AuthMiddleware())
+	{
+		profileRoutes.GET("/", profileHandler.GetUserData)
+		profileRoutes.PUT("/", profileHandler.UpdatePersonalInfo)
 	}
 
 	port := os.Getenv("PORT")
