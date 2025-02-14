@@ -10,10 +10,7 @@ import (
 	"github.com/OleksandrBob/nextseasonlist/users-service/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"go.mongodb.org/mongo-driver/mongo"
 )
-
-var userCollection *mongo.Collection
 
 func main() {
 	err := godotenv.Load()
@@ -32,9 +29,11 @@ func main() {
 		return
 	}
 
-	userCollection = db.GetCollection("users_db", "users")
-	authHandler := handlers.NewAuthHandler(userCollection)
+	userCollection := db.GetCollection("users_db", "users")
+	tokenBlacklistCollection := db.GetCollection("users_db", "blacklistedTokens")
+
 	profileHandler := handlers.NewProfileHandler(userCollection)
+	authHandler := handlers.NewAuthHandler(userCollection, tokenBlacklistCollection)
 
 	router := gin.Default()
 	router.Use(gin.Logger())
@@ -42,6 +41,7 @@ func main() {
 	authRoutes := router.Group("/auth")
 	{
 		authRoutes.POST("/login", authHandler.LoginUser)
+		authRoutes.POST("/logout", authHandler.LogOut)
 		authRoutes.POST("/register", authHandler.RegisterUser)
 		authRoutes.POST("/refreshToken", authHandler.RefreshToken)
 	}

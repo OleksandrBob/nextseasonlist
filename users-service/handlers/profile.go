@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/OleksandrBob/nextseasonlist/users-service/models"
+	"github.com/OleksandrBob/nextseasonlist/users-service/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,7 +23,7 @@ func NewProfileHandler(userCollection *mongo.Collection) *ProfileHandler {
 }
 
 func (h *ProfileHandler) GetUserData(c *gin.Context) {
-	userId, exists := c.Get("user_id")
+	userId, exists := c.Get(utils.UserIdClaim)
 
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User is unauthorized"})

@@ -13,16 +13,16 @@ var refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
 
 func GenerateAccessToken(userID string) (string, error) {
 	calims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Minute * 10).Unix(),
+		UserIdClaim:     userID,
+		ExpirationClaim: time.Now().Add(AccessTokenDurationTime).Unix(),
 	}
 	return generateToken(calims, accessTokenSecret)
 }
 
 func GenerateRefreshToken(userID string) (string, error) {
 	calims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(), // 1 week
+		UserIdClaim:     userID,
+		ExpirationClaim: time.Now().Add(RefreshTokenDurationTime).Unix(),
 	}
 	return generateToken(calims, refreshTokenSecret)
 }
@@ -40,7 +40,7 @@ func ValidateRefreshToken(tokenString string) (jwt.MapClaims, error) {
 	return validateToken(tokenString, refreshTokenSecret)
 }
 
-func validateToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
+func validateToken(tokenString string, secret []byte) (jwt.MapClaims, error) { //TODO reimplement token valiadtion to be more specific why token is invalid
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid token")

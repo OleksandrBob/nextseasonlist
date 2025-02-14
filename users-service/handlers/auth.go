@@ -14,11 +14,12 @@ import (
 )
 
 type AuthHandler struct {
-	UserCollection *mongo.Collection
+	UserCollection           *mongo.Collection
+	TokenBlacklistCollection *mongo.Collection
 }
 
-func NewAuthHandler(userCollection *mongo.Collection) *AuthHandler {
-	return &AuthHandler{UserCollection: userCollection}
+func NewAuthHandler(userCollection *mongo.Collection, tokenBlacklistCollection *mongo.Collection) *AuthHandler {
+	return &AuthHandler{UserCollection: userCollection, TokenBlacklistCollection: tokenBlacklistCollection}
 }
 
 func (h *AuthHandler) RegisterUser(c *gin.Context) {
@@ -93,14 +94,14 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("refreshToken", refreshToken, 7*24*60*60, "", "localhost", true, true)
-	c.JSON(http.StatusOK, gin.H{"accessToken": accessToken})
+	c.SetCookie(utils.RefreshTokenName, refreshToken, 7*24*60*60, "", "localhost", true, true) //TODO remove localhost
+	c.JSON(http.StatusOK, gin.H{utils.AccessTokenName: accessToken})
 }
 
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	refreshToken := ""
 	for _, cookie := range c.Request.Cookies() {
-		if cookie.Name == "refreshToken" { //TODO && cookie.HttpOnly
+		if cookie.Name == utils.RefreshTokenName { //TODO && cookie.HttpOnly
 			refreshToken = cookie.Value
 			break
 		}
@@ -116,7 +117,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	userID := claims["user_id"].(string)
+	userID := claims[utils.UserIdClaim].(string)
 	newAccessToken, err := utils.GenerateAccessToken(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate access token"})
@@ -124,6 +125,20 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"access_token": newAccessToken,
+		utils.AccessTokenName: newAccessToken,
 	})
+}
+
+func (h *AuthHandler) LogOut(c *gin.Context) {
+	refreshToken, err := c.Cookie(utils.RefreshTokenName)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing refresh token. Can't log out"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	h.TokenBlacklistCollection.InsertOne(ctx, bson.D{{Key: "token", Value: refreshToken}})
+	c.SetCookie(utils.RefreshTokenName, "", -1, "", "localhost", true, true) //TODO remove localhost
 }
