@@ -117,6 +117,20 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+
+	var blacklistedToken models.BlacklistedToken
+	err = h.TokenBlacklistCollection.FindOne(ctx, bson.M{"token": refreshToken}).Decode(&blacklistedToken)
+	if err == nil { // found in db
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User was loged out"})
+		return
+	}
+	if err.Error() != "mongo: no documents in result" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unable to decode value from db"})
+		return
+	}
+
 	userID := claims[utils.UserIdClaim].(string)
 	newAccessToken, err := utils.GenerateAccessToken(userID)
 	if err != nil {
@@ -132,13 +146,25 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 func (h *AuthHandler) LogOut(c *gin.Context) {
 	refreshToken, err := c.Cookie(utils.RefreshTokenName)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing refresh token. Can't log out"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing refresh token. Can't perform log out"})
 		return
 	}
+
+	claims, err := utils.ValidateRefreshToken(refreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+
+	tokenExpirationTime := int64(claims[utils.ExpirationClaim].(float64))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	h.TokenBlacklistCollection.InsertOne(ctx, bson.D{{Key: "token", Value: refreshToken}})
+	h.TokenBlacklistCollection.InsertOne(ctx, models.BlacklistedToken{
+		Token:     refreshToken,
+		ExpiresAt: time.Unix(tokenExpirationTime, 0),
+	})
+
 	c.SetCookie(utils.RefreshTokenName, "", -1, "", "localhost", true, true) //TODO remove localhost
 }

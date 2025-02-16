@@ -16,3 +16,8 @@ var (
 	UserIdClaim     = "user_id"
 	ExpirationClaim = "exp"
 )
+
+var (
+	JobMaxDurationTime = 1 * time.Minute
+	JobRecuuringPeriod = 24 * time.Hour
+)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/OleksandrBob/nextseasonlist/users-service/db"
 	"github.com/OleksandrBob/nextseasonlist/users-service/handlers"
+	"github.com/OleksandrBob/nextseasonlist/users-service/jobs"
 	"github.com/OleksandrBob/nextseasonlist/users-service/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -36,7 +37,6 @@ func main() {
 	authHandler := handlers.NewAuthHandler(userCollection, tokenBlacklistCollection)
 
 	router := gin.Default()
-	router.Use(gin.Logger())
 
 	authRoutes := router.Group("/auth")
 	{
@@ -56,6 +56,9 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	go jobs.StartJobs(tokenBlacklistCollection)
+
 	log.Println("Server running on port", port)
 	router.Run(":" + port)
 }
