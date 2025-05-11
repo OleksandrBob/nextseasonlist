@@ -45,7 +45,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	user.Password = string(hashedPassword)
+	user.Password = hashedPassword
 	user.ID = primitive.NewObjectID()
 	_, err = h.UserCollection.InsertOne(ctx, user)
 	if err != nil {

@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	DbName                      = "users_db"
-	UsersCollection             = "users"
-	BlacklistedTokensCollection = "blacklistedTokens"
+	DbName             = "shows_db"
+	SerialsCollection  = "serials"
+	EpisodesCollection = "episodes"
 )
 
 var mongoDbClient *mongo.Client
@@ -38,12 +38,12 @@ func ConnectDb(uri string) error {
 }
 
 func DisconnectDb() {
-	if mongoDbClient == nil {
-		return
+	if mongoDbClient != nil {
+		mongoDbClient.Disconnect(context.TODO())
+		log.Println("Disconnected from mongo")
+	} else {
+		log.Println("Cannot disconect from mongo - client is uninitialized")
 	}
-
-	mongoDbClient.Disconnect(context.TODO())
-	log.Println("Disconnected from mongo")
 }
 
 func GetCollection(dbName string, collectionName string) *mongo.Collection {

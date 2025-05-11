@@ -26,12 +26,13 @@ func main() {
 	}
 
 	err = db.ConnectDb(mongoURI)
+	defer db.DisconnectDb()
 	if err != nil {
 		return
 	}
 
-	userCollection := db.GetCollection("users_db", "users")
-	tokenBlacklistCollection := db.GetCollection("users_db", "blacklistedTokens")
+	userCollection := db.GetCollection(db.DbName, db.UsersCollection)
+	tokenBlacklistCollection := db.GetCollection(db.DbName, db.BlacklistedTokensCollection)
 
 	profileHandler := handlers.NewProfileHandler(userCollection)
 	authHandler := handlers.NewAuthHandler(userCollection, tokenBlacklistCollection)

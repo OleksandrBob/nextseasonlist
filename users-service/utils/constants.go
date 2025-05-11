@@ -2,22 +2,22 @@ package utils
 
 import "time"
 
-var (
+const (
 	AccessTokenDurationTime  = 10 * time.Minute
 	RefreshTokenDurationTime = (7 * 24 * time.Hour) // 1 week
 )
 
-var (
+const (
 	AccessTokenName  = "accessToken"
 	RefreshTokenName = "refreshToken"
 )
 
-var (
-	UserIdClaim     = "user_id"
+const (
+	UserIdClaim     = "sub"
 	ExpirationClaim = "exp"
 )
 
-var (
+const (
 	JobMaxDurationTime = 1 * time.Minute
 	JobRecuuringPeriod = 24 * time.Hour
 )

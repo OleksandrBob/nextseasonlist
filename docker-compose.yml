@@ -6,7 +6,7 @@ services:
     container_name: users-service
     environment:
       - PORT=8080
-      - MONGO_URI=mongodb://mongo:27017/users_db
+      - MONGO_URI=mongodb://mongo:27017
       - ACCESS_TOKEN_SECRET=super_secret_key_for_user_service
       - REFRESH_TOKEN_SECRET=super_secret_rkey_for_user_service
     depends_on:
@@ -14,9 +14,23 @@ services:
     ports:
       - "8080:8080"
 
+  shows-service:
+    build:
+      context: ./shows-service
+      dockerfile: docker/dockerfile
+    container_name: shows-service
+    environment:
+      - PORT=8080
+      - MONGO_URI=mongodb://mongo:27017
+      - ACCESS_TOKEN_SECRET=super_secret_key_for_user_service
+    depends_on:
+      - mongo
+    ports:
+      - "8081:8080"
+
   mongo:
     image: mongo:7.0.2
-    container_name: users-mongo
+    container_name: mongo-cluster
     restart: always
     volumes:
       - mongo_data:/data/db

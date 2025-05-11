@@ -13,6 +13,7 @@ var refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
 
 func GenerateAccessToken(userID string) (string, error) {
 	calims := jwt.MapClaims{
+
 		UserIdClaim:     userID,
 		ExpirationClaim: time.Now().Add(AccessTokenDurationTime).Unix(),
 	}
@@ -40,21 +41,25 @@ func ValidateRefreshToken(tokenString string) (jwt.MapClaims, error) {
 	return validateToken(tokenString, refreshTokenSecret)
 }
 
-func validateToken(tokenString string, secret []byte) (jwt.MapClaims, error) { //TODO reimplement token valiadtion to be more specific why token is invalid
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("invalid token")
-		}
+func validateToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
+	claims := jwt.MapClaims{}
 
+	_, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid token signing method")
+		}
 		return secret, nil
 	})
 
 	if err != nil {
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorExpired != 0 {
+				return claims, errors.New("token expired")
+			}
+			return nil, errors.New("invalid token: " + err.Error())
+		}
 		return nil, err
 	}
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims, nil
-	}
 
-	return nil, errors.New("invalid token")
+	return claims, nil
 }
