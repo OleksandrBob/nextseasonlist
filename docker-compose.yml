@@ -2,7 +2,7 @@ services:
   users-service:
     build:
       context: ./users-service
-      dockerfile: docker/dockerfile
+      dockerfile: dockerfile
     container_name: users-service
     environment:
       - PORT=8080
@@ -17,7 +17,7 @@ services:
   shows-service:
     build:
       context: ./shows-service
-      dockerfile: docker/dockerfile
+      dockerfile: dockerfile
     container_name: shows-service
     environment:
       - PORT=8080

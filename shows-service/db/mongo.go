@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	DbName             = "shows_db"
-	SerialsCollection  = "serials"
-	EpisodesCollection = "episodes"
+	DbName               = "shows_db"
+	SerialsCollection    = "serials"
+	EpisodesCollection   = "episodes"
+	CategoriesCollection = "categories"
 )
 
 var mongoDbClient *mongo.Client

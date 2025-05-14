@@ -60,6 +60,6 @@ func main() {
 
 	go jobs.StartJobs(tokenBlacklistCollection)
 
-	log.Println("Server running on port", port)
+	log.Println("Users-Server running on port: ", port)
 	router.Run(":" + port)
 }

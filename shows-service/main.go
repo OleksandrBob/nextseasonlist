@@ -37,6 +37,7 @@ func main() {
 	router := gin.Default()
 	serialRoutes := router.Group("/serial")
 	{
+		serialRoutes.POST("/", serialHandler.AddSerial)
 		serialRoutes.GET("/", serialHandler.SearchSerials)
 	}
 
@@ -45,6 +46,6 @@ func main() {
 		port = "8080"
 	}
 
-	log.Println("Server running on porttt", port)
+	log.Println("Shows-Server running on port: ", port)
 	router.Run(":" + port)
 }
