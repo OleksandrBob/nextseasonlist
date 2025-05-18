@@ -15,6 +15,7 @@ const (
 const (
 	UserIdClaim     = "sub"
 	ExpirationClaim = "exp"
+	RolesClaim      = "roles"
 )
 
 const (

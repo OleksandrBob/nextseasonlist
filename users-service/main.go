@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/OleksandrBob/nextseasonlist/users-service/db"
+	"github.com/OleksandrBob/nextseasonlist/users-service/db/migrations"
 	"github.com/OleksandrBob/nextseasonlist/users-service/handlers"
-	"github.com/OleksandrBob/nextseasonlist/users-service/jobs"
 	"github.com/OleksandrBob/nextseasonlist/users-service/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -31,8 +31,10 @@ func main() {
 		return
 	}
 
-	userCollection := db.GetCollection(db.DbName, db.UsersCollection)
-	tokenBlacklistCollection := db.GetCollection(db.DbName, db.BlacklistedTokensCollection)
+	migrations.Migrate_v1()
+
+	userCollection := db.GetCollection(db.UsersCollection)
+	tokenBlacklistCollection := db.GetCollection(db.BlacklistedTokensCollection)
 
 	profileHandler := handlers.NewProfileHandler(userCollection)
 	authHandler := handlers.NewAuthHandler(userCollection, tokenBlacklistCollection)
@@ -58,7 +60,7 @@ func main() {
 		port = "8080"
 	}
 
-	go jobs.StartJobs(tokenBlacklistCollection)
+	// go jobs.StartJobs(tokenBlacklistCollection)
 
 	log.Println("Users-Server running on port: ", port)
 	router.Run(":" + port)

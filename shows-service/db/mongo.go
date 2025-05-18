@@ -47,6 +47,6 @@ func DisconnectDb() {
 	}
 }
 
-func GetCollection(dbName string, collectionName string) *mongo.Collection {
-	return mongoDbClient.Database(dbName).Collection(collectionName)
+func GetCollection(collectionName string) *mongo.Collection {
+	return mongoDbClient.Database(DbName).Collection(collectionName)
 }

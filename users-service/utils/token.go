@@ -11,10 +11,10 @@ import (
 var accessTokenSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
 var refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
 
-func GenerateAccessToken(userID string) (string, error) {
+func GenerateAccessToken(userID string, userRoles []string) (string, error) {
 	calims := jwt.MapClaims{
-
 		UserIdClaim:     userID,
+		RolesClaim:      userRoles,
 		ExpirationClaim: time.Now().Add(AccessTokenDurationTime).Unix(),
 	}
 	return generateToken(calims, accessTokenSecret)

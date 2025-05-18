@@ -1,0 +1,1 @@
+Shows service is a standalone instance/container that requires MongoDB to function.

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/OleksandrBob/nextseasonlist/shows-service/db"
+	"github.com/OleksandrBob/nextseasonlist/shows-service/db/migrations"
 	"github.com/OleksandrBob/nextseasonlist/shows-service/handlers"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -29,10 +30,13 @@ func main() {
 		return
 	}
 
-	serialsCollection := db.GetCollection(db.DbName, db.SerialsCollection)
-	//episodesCollection := db.GetCollection(db.DbName, db.EpisodesCollection)
+	migrations.Migrate_v1()
 
-	serialHandler := handlers.NewSerialHandler(serialsCollection)
+	serialsCollection := db.GetCollection(db.SerialsCollection)
+	categoriesCollection := db.GetCollection(db.CategoriesCollection)
+	//episodesCollection := db.GetCollection(db.EpisodesCollection)
+
+	serialHandler := handlers.NewSerialHandler(serialsCollection, categoriesCollection)
 
 	router := gin.Default()
 	serialRoutes := router.Group("/serial")

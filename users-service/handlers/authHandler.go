@@ -83,7 +83,7 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 	}
 
 	userId := userInDb.ID.Hex()
-	accessToken, err := utils.GenerateAccessToken(userId)
+	accessToken, err := utils.GenerateAccessToken(userId, userInDb.Roles)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate access token"})
 		return
@@ -94,6 +94,7 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(utils.RefreshTokenName, refreshToken, 7*24*60*60, "", "localhost", true, true) //TODO remove localhost
 	c.JSON(http.StatusOK, gin.H{utils.AccessTokenName: accessToken})
 }
@@ -101,7 +102,7 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	refreshToken := ""
 	for _, cookie := range c.Request.Cookies() {
-		if cookie.Name == utils.RefreshTokenName { //TODO && cookie.HttpOnly
+		if cookie.Name == utils.RefreshTokenName && cookie.HttpOnly {
 			refreshToken = cookie.Value
 			break
 		}
@@ -111,7 +112,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	claims, err := utils.ValidateRefreshToken(refreshToken)
+	refreshTokenClaims, err := utils.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
 		return
@@ -131,8 +132,17 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	userID := claims[utils.UserIdClaim].(string)
-	newAccessToken, err := utils.GenerateAccessToken(userID)
+	userID := refreshTokenClaims[utils.UserIdClaim].(string)
+
+	var userInDb models.User
+	err = h.UserCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&userInDb)
+	if err == mongo.ErrNoDocuments {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	newAccessToken, err := utils.GenerateAccessToken(userID, userInDb.Roles)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate access token"})
 		return

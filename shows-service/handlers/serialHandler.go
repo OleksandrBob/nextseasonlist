@@ -8,16 +8,19 @@ import (
 
 	"github.com/OleksandrBob/nextseasonlist/shows-service/models"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type SerialHandler struct {
-	serialsCollection *mongo.Collection
+	serialsCollection    *mongo.Collection
+	categoriesCollection *mongo.Collection
 }
 
-func NewSerialHandler(serialsCollection *mongo.Collection) *SerialHandler {
-	return &SerialHandler{serialsCollection: serialsCollection}
+func NewSerialHandler(serialsCollection *mongo.Collection, categoriesCollection *mongo.Collection) *SerialHandler {
+	return &SerialHandler{serialsCollection: serialsCollection, categoriesCollection: categoriesCollection}
 }
 
 func (h *SerialHandler) SearchSerials(c *gin.Context) {
@@ -38,15 +41,35 @@ func (h *SerialHandler) AddSerial(c *gin.Context) {
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	if len(addCommand.Categories) > 0 {
+		categoriesCursor, err := h.categoriesCollection.Find(ctx, bson.M{"name": bson.M{"$in": addCommand.Categories}}, options.Find().SetProjection(bson.D{{Key: "_id", Value: 0}}))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error checking categories for serial"})
+			return
+		}
+
+		var foundCategories []models.Category
+		err = categoriesCursor.All(ctx, &foundCategories)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error checking categories for serial"})
+			return
+		}
+
+		if len(foundCategories) != len(addCommand.Categories) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Used unexisting category"})
+			return
+		}
+	}
+
 	serialToAdd := models.Serial{
 		ID:          primitive.NewObjectID(),
-		Name:        addCommand.Name,
+		Title:       addCommand.Title,
 		Description: addCommand.Description,
 		Categories:  addCommand.Categories,
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	result, err := h.serialsCollection.InsertOne(ctx, serialToAdd)
 	if err != nil {
@@ -54,6 +77,6 @@ func (h *SerialHandler) AddSerial(c *gin.Context) {
 		return
 	}
 
-	log.Println("Inserted document with _id: ", result.InsertedID)
-	c.JSON(http.StatusCreated, gin.H{})
+	log.Println("Inserted serial with _id: ", result.InsertedID)
+	c.JSON(http.StatusCreated, gin.H{"CreatedSerialId": result.InsertedID})
 }
