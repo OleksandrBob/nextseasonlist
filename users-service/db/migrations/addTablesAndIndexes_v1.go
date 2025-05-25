@@ -14,31 +14,52 @@ func Migrate_v1() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	_, err := db.GetCollection(db.UsersCollection).Indexes().CreateMany(ctx,
-		[]mongo.IndexModel{
-			{
-				Keys:    bson.D{{Key: "email", Value: 1}},
-				Options: options.Index().SetName("email_idx"),
-			}})
-
+	mongoSession, err := db.GetSession()
 	if err != nil {
 		return err
 	}
 
-	_, err = db.GetCollection(db.BlacklistedTokensCollection).Indexes().CreateMany(ctx,
-		[]mongo.IndexModel{
-			{
-				Keys:    bson.D{{Key: "expires_at", Value: 1}},
-				Options: options.Index().SetName("expires_at_idx").SetExpireAfterSeconds(0),
-			},
-			{
-				Keys:    bson.D{{Key: "token", Value: 1}},
-				Options: options.Index().SetName("token_idx"),
-			}})
+	defer mongoSession.EndSession(ctx)
 
-	if err != nil {
-		return err
-	}
+	err = mongo.WithSession(ctx, mongoSession, func(sc mongo.SessionContext) error {
+		if err := mongoSession.StartTransaction(); err != nil {
+			return err
+		}
 
-	return nil
+		_, err := db.GetCollection(db.UsersCollection).Indexes().CreateMany(ctx,
+			[]mongo.IndexModel{
+				{
+					Keys:    bson.D{{Key: "email", Value: 1}},
+					Options: options.Index().SetName("email_idx"),
+				}})
+
+		if err != nil {
+			_ = mongoSession.AbortTransaction(sc)
+			return err
+		}
+
+		_, err = db.GetCollection(db.BlacklistedTokensCollection).Indexes().CreateMany(ctx,
+			[]mongo.IndexModel{
+				{
+					Keys:    bson.D{{Key: "expires_at", Value: 1}},
+					Options: options.Index().SetName("expires_at_idx").SetExpireAfterSeconds(0),
+				},
+				{
+					Keys:    bson.D{{Key: "token", Value: 1}},
+					Options: options.Index().SetName("token_idx"),
+				}})
+
+		if err != nil {
+			_ = mongoSession.AbortTransaction(sc)
+			return err
+		}
+
+		if err := mongoSession.CommitTransaction(sc); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
 }

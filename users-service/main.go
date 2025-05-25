@@ -31,7 +31,10 @@ func main() {
 		return
 	}
 
-	migrations.Migrate_v1()
+	if err = migrations.Migrate_v1(); err != nil {
+		log.Println(err.Error())
+		return
+	}
 
 	userCollection := db.GetCollection(db.UsersCollection)
 	tokenBlacklistCollection := db.GetCollection(db.BlacklistedTokensCollection)

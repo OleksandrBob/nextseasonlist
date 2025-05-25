@@ -7,6 +7,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 	CategoriesCollection = "categories"
 )
 
+// client is singleton and is initialized when program starts
 var mongoDbClient *mongo.Client
 
 func ConnectDb(uri string) error {
@@ -45,6 +47,11 @@ func DisconnectDb() {
 	} else {
 		log.Println("Cannot disconect from mongo - client is uninitialized")
 	}
+}
+
+func GetSession() (mongo.Session, error) {
+	sessionOptions := options.Session().SetDefaultReadPreference(readpref.Primary())
+	return mongoDbClient.StartSession(sessionOptions)
 }
 
 func GetCollection(collectionName string) *mongo.Collection {

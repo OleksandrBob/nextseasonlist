@@ -7,6 +7,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 const (
@@ -35,6 +36,11 @@ func ConnectDb(uri string) error {
 
 	mongoDbClient = client
 	return nil
+}
+
+func GetSession() (mongo.Session, error) {
+	sessionOptions := options.Session().SetDefaultReadPreference(readpref.Primary())
+	return mongoDbClient.StartSession(sessionOptions)
 }
 
 func DisconnectDb() {

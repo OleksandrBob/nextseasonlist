@@ -33,7 +33,22 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set(utils.UserIdClaim, claims[utils.UserIdClaim])
+		userId, ok := claims[utils.UserIdClaim]
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing userId in claims"})
+			c.Abort()
+			return
+		}
+		c.Set(utils.UserIdClaim, userId)
+
+		userRoles, ok := claims[utils.RolesClaim]
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing userId in claims"})
+			c.Abort()
+			return
+		}
+		c.Set(utils.RolesClaim, userRoles)
+
 		c.Next()
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/OleksandrBob/nextseasonlist/shows-service/db"
 	"github.com/OleksandrBob/nextseasonlist/shows-service/db/migrations"
 	"github.com/OleksandrBob/nextseasonlist/shows-service/handlers"
+	"github.com/OleksandrBob/nextseasonlist/shows-service/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -30,7 +31,10 @@ func main() {
 		return
 	}
 
-	migrations.Migrate_v1()
+	if err = migrations.Migrate_v1(); err != nil {
+		log.Println(err.Error())
+		return
+	}
 
 	serialsCollection := db.GetCollection(db.SerialsCollection)
 	categoriesCollection := db.GetCollection(db.CategoriesCollection)
@@ -39,9 +43,9 @@ func main() {
 	serialHandler := handlers.NewSerialHandler(serialsCollection, categoriesCollection)
 
 	router := gin.Default()
-	serialRoutes := router.Group("/serial")
+	serialRoutes := router.Group("/serial", middlewares.AuthMiddleware())
 	{
-		serialRoutes.POST("/", serialHandler.AddSerial)
+		serialRoutes.POST("/", middlewares.IsAdminMiddleware(), serialHandler.AddSerial)
 		serialRoutes.GET("/", serialHandler.SearchSerials)
 	}
 

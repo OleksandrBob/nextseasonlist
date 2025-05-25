@@ -23,9 +23,9 @@ func NewAuthHandler(userCollection *mongo.Collection, tokenBlacklistCollection *
 }
 
 func (h *AuthHandler) RegisterUser(c *gin.Context) {
-	var user models.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+	var registerUserDto models.RegisterUserDto
+	if err := c.ShouldBindJSON(&registerUserDto); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input", "description": err.Error()})
 		return
 	}
 
@@ -33,21 +33,28 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	defer cancel()
 
 	var existingUser models.User
-	err := h.UserCollection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&existingUser)
+	err := h.UserCollection.FindOne(ctx, bson.M{"email": registerUserDto.Email}).Decode(&existingUser)
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 		return
 	}
 
-	hashedPassword, err := utils.GenerateFromPassword(user.Password)
+	hashedPassword, err := utils.GenerateFromPassword(registerUserDto.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error hashing password"})
 		return
 	}
 
-	user.Password = hashedPassword
-	user.ID = primitive.NewObjectID()
-	_, err = h.UserCollection.InsertOne(ctx, user)
+	userToCreate := models.User{
+		ID:        primitive.NewObjectID(),
+		Password:  hashedPassword,
+		FirstName: registerUserDto.FirstName,
+		LastName:  registerUserDto.LastName,
+		Email:     registerUserDto.Email,
+		Roles:     []string{utils.UserRole},
+	}
+
+	_, err = h.UserCollection.InsertOne(ctx, userToCreate)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error user inserting into DB"})
 		return
