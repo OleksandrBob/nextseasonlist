@@ -10,7 +10,7 @@ services:
       - ACCESS_TOKEN_SECRET=super_secret_key_for_user_service
       - REFRESH_TOKEN_SECRET=super_secret_rkey_for_user_service
     depends_on:
-      - mongo1
+      - mongo-init-replica
     ports:
       - "8080:8080"
 
@@ -24,7 +24,7 @@ services:
       - MONGO_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=rs0&retryWrites=true&w=majority&readPreference=secondaryPreferred
       - ACCESS_TOKEN_SECRET=super_secret_key_for_user_service
     depends_on:
-      - mongo1
+      - mongo-init-replica
     ports:
       - "8081:8080"
 
@@ -40,7 +40,6 @@ services:
     volumes:
       - mongo_data:/data/db
       - mongo_config:/data/configdb
-
 
   mongo2:
     image: mongo:7.0.2

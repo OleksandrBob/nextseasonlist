@@ -39,13 +39,13 @@ func (h *ProfileHandler) GetUserData(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var userFromDb models.User
-	err = h.UserCollection.FindOne(ctx, bson.M{"_id": id}, options.FindOne().SetProjection(bson.D{{Key: "password", Value: 0}})).Decode(&userFromDb)
+	var userInDb models.User
+	err = h.UserCollection.FindOne(ctx, bson.M{"_id": id}, options.FindOne().SetProjection(bson.D{{Key: "password", Value: 0}})).Decode(&userInDb)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unable to decode user from DB"})
 	}
 
-	c.JSON(http.StatusOK, userFromDb)
+	c.JSON(http.StatusOK, userInDb)
 }
 
 func (h *ProfileHandler) UpdatePersonalInfo(c *gin.Context) {

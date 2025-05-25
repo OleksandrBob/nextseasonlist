@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/OleksandrBob/nextseasonlist/shows-service/db"
+	"github.com/OleksandrBob/nextseasonlist/shows-service/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func Migrate_v1() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	mongoSession, err := db.GetSession()
@@ -45,13 +46,35 @@ func Migrate_v1() error {
 		_, err = db.GetCollection(db.CategoriesCollection).Indexes().CreateMany(sc, []mongo.IndexModel{
 			{
 				Keys:    bson.D{{Key: "name", Value: 1}},
-				Options: options.Index().SetName("name_idx"),
+				Options: options.Index().SetName("name_idx").SetUnique(true),
 			},
 		})
 
 		if err != nil {
 			_ = mongoSession.AbortTransaction(sc)
 			return err
+		}
+
+		catCount, err := db.GetCollection(db.CategoriesCollection).CountDocuments(ctx, bson.D{})
+
+		if err != nil {
+			_ = mongoSession.AbortTransaction(sc)
+			return err
+		}
+
+		if catCount == 0 {
+			_, err = db.GetCollection(db.CategoriesCollection).InsertMany(sc, []interface{}{
+				models.Category{ID: 1, Name: "comedy"},
+				models.Category{ID: 2, Name: "drama"},
+				models.Category{ID: 3, Name: "horror"},
+				models.Category{ID: 4, Name: "adventure"},
+				models.Category{ID: 5, Name: "survival"},
+			})
+
+			if err != nil {
+				_ = mongoSession.AbortTransaction(sc)
+				return err
+			}
 		}
 
 		if err := mongoSession.CommitTransaction(sc); err != nil {

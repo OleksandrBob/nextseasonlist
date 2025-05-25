@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type AuthHandler struct {
@@ -23,7 +24,7 @@ func NewAuthHandler(userCollection *mongo.Collection, tokenBlacklistCollection *
 }
 
 func (h *AuthHandler) RegisterUser(c *gin.Context) {
-	var registerUserDto models.RegisterUserDto
+	var registerUserDto models.RegisterUserCommand
 	if err := c.ShouldBindJSON(&registerUserDto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input", "description": err.Error()})
 		return
@@ -109,7 +110,7 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	refreshToken := ""
 	for _, cookie := range c.Request.Cookies() {
-		if cookie.Name == utils.RefreshTokenName && cookie.HttpOnly {
+		if cookie.Name == utils.RefreshTokenName {
 			refreshToken = cookie.Value
 			break
 		}
@@ -135,20 +136,26 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 	if err.Error() != "mongo: no documents in result" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unable to decode value from db"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	userID := refreshTokenClaims[utils.UserIdClaim].(string)
+	userId := refreshTokenClaims[utils.UserIdClaim].(string)
+
+	mongoId, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid userId in token"})
+		return
+	}
 
 	var userInDb models.User
-	err = h.UserCollection.FindOne(ctx, bson.M{"_id": userID}).Decode(&userInDb)
+	err = h.UserCollection.FindOne(ctx, bson.M{"_id": mongoId}, options.FindOne().SetProjection(bson.D{{Key: "password", Value: 0}})).Decode(&userInDb)
 	if err == mongo.ErrNoDocuments {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not found user for refresh"})
 		return
 	}
 
-	newAccessToken, err := utils.GenerateAccessToken(userID, userInDb.Roles)
+	newAccessToken, err := utils.GenerateAccessToken(userId, userInDb.Roles)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate access token"})

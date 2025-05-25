@@ -1,6 +1,6 @@
 package models
 
-type RegisterUserDto struct {
+type RegisterUserCommand struct {
 	FirstName string `bson:"firstName" json:"firstName" binding:"required,min=1"`
 	LastName  string `bson:"lastName" json:"lastName" binding:"required,min=1"`
 	Email     string `bson:"email" json:"email" binding:"required,email"`
