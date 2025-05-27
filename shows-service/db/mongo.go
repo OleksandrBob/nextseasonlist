@@ -42,7 +42,7 @@ func ConnectDb(uri string) error {
 
 func DisconnectDb() {
 	if mongoDbClient != nil {
-		mongoDbClient.Disconnect(context.TODO())
+		mongoDbClient.Disconnect(context.Background())
 		log.Println("Disconnected from mongo")
 	} else {
 		log.Println("Cannot disconect from mongo - client is uninitialized")

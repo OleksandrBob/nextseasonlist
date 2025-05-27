@@ -54,7 +54,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func IsAdminMiddleware() gin.HandlerFunc {
+func AllowRoleMiddleware(allowedRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRoles, claimsExist := c.Get(utils.RolesClaim)
 
@@ -76,7 +76,7 @@ func IsAdminMiddleware() gin.HandlerFunc {
 			roles[i] = roleStr
 		}
 
-		if !slices.Contains(roles, utils.AdminRole) {
+		if !slices.Contains(roles, allowedRole) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "User's role does not allow specified request"})
 			c.Abort()
 			return

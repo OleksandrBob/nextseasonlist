@@ -48,7 +48,7 @@ func DisconnectDb() {
 		return
 	}
 
-	mongoDbClient.Disconnect(context.TODO())
+	mongoDbClient.Disconnect(context.Background())
 	log.Println("Disconnected from mongo")
 }
 

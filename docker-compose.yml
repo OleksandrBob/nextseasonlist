@@ -6,9 +6,10 @@ services:
     container_name: users-service
     environment:
       - PORT=8080
-      - MONGO_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=rs0&retryWrites=true&w=majority&readPreference=secondaryPreferred
+      - HOST_URL=localhost
       - ACCESS_TOKEN_SECRET=super_secret_key_for_user_service
       - REFRESH_TOKEN_SECRET=super_secret_rkey_for_user_service
+      - MONGO_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=rs0&retryWrites=true&w=majority&readPreference=secondaryPreferred
     depends_on:
       - mongo-init-replica
     ports:
@@ -21,8 +22,8 @@ services:
     container_name: shows-service
     environment:
       - PORT=8080
-      - MONGO_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=rs0&retryWrites=true&w=majority&readPreference=secondaryPreferred
       - ACCESS_TOKEN_SECRET=super_secret_key_for_user_service
+      - MONGO_URI=mongodb://mongo1:27017,mongo2:27018,mongo3:27019/?replicaSet=rs0&retryWrites=true&w=majority&readPreference=secondaryPreferred
     depends_on:
       - mongo-init-replica
     ports:

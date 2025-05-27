@@ -9,6 +9,7 @@ import (
 	"github.com/OleksandrBob/nextseasonlist/shows-service/db/migrations"
 	"github.com/OleksandrBob/nextseasonlist/shows-service/handlers"
 	"github.com/OleksandrBob/nextseasonlist/shows-service/middlewares"
+	"github.com/OleksandrBob/nextseasonlist/shows-service/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -45,7 +46,7 @@ func main() {
 	router := gin.Default()
 	serialRoutes := router.Group("/serial", middlewares.AuthMiddleware())
 	{
-		serialRoutes.POST("/", middlewares.IsAdminMiddleware(), serialHandler.AddSerial)
+		serialRoutes.POST("/", middlewares.AllowRoleMiddleware(utils.AdminRole), serialHandler.AddSerial)
 		serialRoutes.GET("/", serialHandler.SearchSerials)
 	}
 

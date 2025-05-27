@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/OleksandrBob/nextseasonlist/users-service/models"
@@ -18,6 +19,8 @@ type AuthHandler struct {
 	UserCollection           *mongo.Collection
 	TokenBlacklistCollection *mongo.Collection
 }
+
+var HostUrl string = os.Getenv("HOST_URL")
 
 func NewAuthHandler(userCollection *mongo.Collection, tokenBlacklistCollection *mongo.Collection) *AuthHandler {
 	return &AuthHandler{UserCollection: userCollection, TokenBlacklistCollection: tokenBlacklistCollection}
@@ -103,7 +106,7 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 	}
 
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(utils.RefreshTokenName, refreshToken, 7*24*60*60, "", "localhost", true, true) //TODO remove localhost
+	c.SetCookie(utils.RefreshTokenName, refreshToken, 7*24*60*60, "", HostUrl, true, true)
 	c.JSON(http.StatusOK, gin.H{utils.AccessTokenName: accessToken})
 }
 
@@ -190,5 +193,5 @@ func (h *AuthHandler) LogOut(c *gin.Context) {
 		ExpiresAt: time.Unix(tokenExpirationTime, 0),
 	})
 
-	c.SetCookie(utils.RefreshTokenName, "", -1, "", "localhost", true, true) //TODO remove localhost
+	c.SetCookie(utils.RefreshTokenName, "", -1, "", HostUrl, true, true)
 }
