@@ -26,3 +26,5 @@ go.work.sum
 
 .dockerignore
 .vscode
+
+vendor

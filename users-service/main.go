@@ -8,9 +8,10 @@ import (
 	"github.com/OleksandrBob/nextseasonlist/users-service/db"
 	"github.com/OleksandrBob/nextseasonlist/users-service/db/migrations"
 	"github.com/OleksandrBob/nextseasonlist/users-service/handlers"
-	"github.com/OleksandrBob/nextseasonlist/users-service/middlewares"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+
+	sharedMiddlewares "github.com/OleksandrBob/nextseasonlist/shared/middlewares"
 )
 
 func main() {
@@ -52,7 +53,7 @@ func main() {
 		authRoutes.POST("/refreshToken", authHandler.RefreshToken)
 	}
 
-	profileRoutes := router.Group("/profile", middlewares.AuthMiddleware())
+	profileRoutes := router.Group("/profile", sharedMiddlewares.AuthMiddleware([]byte(os.Getenv("ACCESS_TOKEN_SECRET"))))
 	{
 		profileRoutes.GET("/", profileHandler.GetUserData)
 		profileRoutes.PUT("/", profileHandler.UpdatePersonalInfo)

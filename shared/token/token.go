@@ -1,4 +1,4 @@
-package shared
+package token
 
 import (
 	"errors"
@@ -6,7 +6,11 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func validateToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
+func ValidateAccessToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
+	return ValidateToken(tokenString, secret)
+}
+
+func ValidateToken(tokenString string, secret []byte) (jwt.MapClaims, error) {
 	claims := jwt.MapClaims{}
 
 	_, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {

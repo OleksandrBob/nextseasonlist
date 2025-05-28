@@ -5,11 +5,13 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/OleksandrBob/nextseasonlist/shows-service/utils"
+	"github.com/OleksandrBob/nextseasonlist/shared/token"
+	"github.com/OleksandrBob/nextseasonlist/shared/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(accessTokecSecret []byte) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -27,7 +29,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		tokenStr := tokenParts[1]
 
-		claims, err := utils.ValidateAccessToken(tokenStr)
+		claims, err := token.ValidateAccessToken(tokenStr, accessTokecSecret)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()

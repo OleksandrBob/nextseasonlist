@@ -1,14 +1,28 @@
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
+
 ENV GOOS=linux \
     GOARCH=amd64
+
 WORKDIR /app
-COPY ../go.mod .
+
+RUN mkdir shows-service
+
+COPY shows-service/go.mod ./shows-service
+COPY shows-service/go.sum ./shows-service
+COPY shared ./shared
+
+WORKDIR /app/shows-service
+
 RUN go mod download
-COPY ../ .
+
+COPY shows-service/ ./
+
 RUN go build -o server main.go
 
 FROM alpine:latest
+
 WORKDIR /root/
-COPY --from=builder /app/server .
+COPY --from=builder /app/shows-service/server ./
+
 EXPOSE 8080
 CMD ["./server"]
