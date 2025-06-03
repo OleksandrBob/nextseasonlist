@@ -5,3 +5,8 @@ const (
 	ExpirationClaim = "exp"
 	RolesClaim      = "roles"
 )
+
+const (
+	UserRole  = "user"
+	AdminRole = "admin"
+)

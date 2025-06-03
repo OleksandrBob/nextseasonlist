@@ -31,6 +31,23 @@ func (h *SerialHandler) SearchSerials(c *gin.Context) {
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	serialsCursor, err := h.serialsCollection.Find(ctx, bson.M{"$or": []interface{}{bson.M{"title": bson.M{"$regex": searchRequest.Title}}, bson.M{"categories": bson.M{"$in": searchRequest.Categories}}}})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error receiving serials from DB"})
+		return
+	}
+
+	var foundSerials []models.SearchSerialsQueryResponse
+	err = serialsCursor.All(ctx, &foundSerials)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Error receiving serials"})
+		return
+	}
+
+	c.JSON(http.StatusOK, foundSerials)
 }
 
 func (h *SerialHandler) AddSerial(c *gin.Context) {
@@ -47,14 +64,14 @@ func (h *SerialHandler) AddSerial(c *gin.Context) {
 	if len(addCommand.Categories) > 0 {
 		categoriesCursor, err := h.categoriesCollection.Find(ctx, bson.M{"name": bson.M{"$in": addCommand.Categories}}, options.Find().SetProjection(bson.D{{Key: "_id", Value: 0}}))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Error checking categories for serial"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error receiving categories from DB"})
 			return
 		}
 
 		var foundCategories []models.Category
 		err = categoriesCursor.All(ctx, &foundCategories)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Error checking categories for serial"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Error checking categories"})
 			return
 		}
 

@@ -13,6 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	sharedUtils "github.com/OleksandrBob/nextseasonlist/shared/utils"
 )
 
 type AuthHandler struct {
@@ -55,7 +57,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		FirstName: registerUserDto.FirstName,
 		LastName:  registerUserDto.LastName,
 		Email:     registerUserDto.Email,
-		Roles:     []string{utils.UserRole},
+		Roles:     []string{sharedUtils.UserRole},
 	}
 
 	_, err = h.UserCollection.InsertOne(ctx, userToCreate)

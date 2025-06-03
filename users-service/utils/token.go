@@ -8,9 +8,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-var accessTokenSecret = []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
-var refreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
-
 func GenerateAccessToken(userID string, userRoles []string) (string, error) {
 	calims := jwt.MapClaims{
 		UserIdClaim:     userID,
@@ -18,7 +15,7 @@ func GenerateAccessToken(userID string, userRoles []string) (string, error) {
 		ExpirationClaim: time.Now().Add(AccessTokenDurationTime).Unix(),
 	}
 
-	return generateToken(calims, accessTokenSecret)
+	return generateToken(calims, []byte(os.Getenv("ACCESS_TOKEN_SECRET")))
 }
 
 func GenerateRefreshToken(userID string) (string, error) {
@@ -27,7 +24,7 @@ func GenerateRefreshToken(userID string) (string, error) {
 		ExpirationClaim: time.Now().Add(RefreshTokenDurationTime).Unix(),
 	}
 
-	return generateToken(calims, refreshTokenSecret)
+	return generateToken(calims, []byte(os.Getenv("REFRESH_TOKEN_SECRET")))
 }
 
 func generateToken(claims jwt.MapClaims, secret []byte) (string, error) {
@@ -36,5 +33,5 @@ func generateToken(claims jwt.MapClaims, secret []byte) (string, error) {
 }
 
 func ValidateRefreshToken(tokenString string) (jwt.MapClaims, error) {
-	return token.ValidateToken(tokenString, refreshTokenSecret)
+	return token.ValidateToken(tokenString, []byte(os.Getenv("REFRESH_TOKEN_SECRET")))
 }

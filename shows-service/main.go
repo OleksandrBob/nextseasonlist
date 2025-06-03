@@ -8,11 +8,11 @@ import (
 	"github.com/OleksandrBob/nextseasonlist/shows-service/db"
 	"github.com/OleksandrBob/nextseasonlist/shows-service/db/migrations"
 	"github.com/OleksandrBob/nextseasonlist/shows-service/handlers"
-	"github.com/OleksandrBob/nextseasonlist/shows-service/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
 	sharedMiddlewares "github.com/OleksandrBob/nextseasonlist/shared/middlewares"
+	sharedUtils "github.com/OleksandrBob/nextseasonlist/shared/utils"
 )
 
 func main() {
@@ -47,8 +47,8 @@ func main() {
 	router := gin.Default()
 	serialRoutes := router.Group("/serial", sharedMiddlewares.AuthMiddleware([]byte(os.Getenv("ACCESS_TOKEN_SECRET"))))
 	{
-		serialRoutes.POST("/", sharedMiddlewares.AllowRoleMiddleware(utils.AdminRole), serialHandler.AddSerial)
-		serialRoutes.GET("/", serialHandler.SearchSerials)
+		serialRoutes.POST("/", sharedMiddlewares.AllowRoleMiddleware(sharedUtils.AdminRole), serialHandler.AddSerial)
+		serialRoutes.POST("/search", serialHandler.SearchSerials)
 	}
 
 	port := os.Getenv("PORT")

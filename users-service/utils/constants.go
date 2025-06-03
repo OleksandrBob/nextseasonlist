@@ -19,11 +19,6 @@ const (
 )
 
 const (
-	UserRole  = "user"
-	AdminRole = "admin"
-)
-
-const (
 	JobMaxDurationTime = 1 * time.Minute
 	JobRecuuringPeriod = 24 * time.Hour
 )
