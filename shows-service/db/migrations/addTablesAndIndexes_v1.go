@@ -55,6 +55,18 @@ func Migrate_v1() error {
 			return err
 		}
 
+		_, err = db.GetCollection(db.EpisodesCollection).Indexes().CreateMany(sc, []mongo.IndexModel{
+			{
+				Keys:    bson.D{{Key: "serialId", Value: 1}},
+				Options: options.Index().SetName("serialId_idx"),
+			},
+		})
+
+		if err != nil {
+			_ = mongoSession.AbortTransaction(sc)
+			return err
+		}
+
 		catCount, err := db.GetCollection(db.CategoriesCollection).CountDocuments(ctx, bson.D{})
 
 		if err != nil {

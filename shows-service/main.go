@@ -38,17 +38,26 @@ func main() {
 		return
 	}
 
-	serialsCollection := db.GetCollection(db.SerialsCollection)
-	categoriesCollection := db.GetCollection(db.CategoriesCollection)
-	//episodesCollection := db.GetCollection(db.EpisodesCollection)
+	accessTokenSecret := []byte(os.Getenv("ACCESS_TOKEN_SECRET"))
 
-	serialHandler := handlers.NewSerialHandler(serialsCollection, categoriesCollection)
+	serialsCollection := db.GetCollection(db.SerialsCollection)
+	episodesCollection := db.GetCollection(db.EpisodesCollection)
+	categoriesCollection := db.GetCollection(db.CategoriesCollection)
 
 	router := gin.Default()
-	serialRoutes := router.Group("/serial", sharedMiddlewares.AuthMiddleware([]byte(os.Getenv("ACCESS_TOKEN_SECRET"))))
+
+	serialHandler := handlers.NewSerialHandler(serialsCollection, categoriesCollection)
+	serialRoutes := router.Group("/serial", sharedMiddlewares.AuthMiddleware(accessTokenSecret))
 	{
 		serialRoutes.POST("/", sharedMiddlewares.AllowRoleMiddleware(sharedUtils.AdminRole), serialHandler.AddSerial)
 		serialRoutes.POST("/search", serialHandler.SearchSerials)
+	}
+
+	episodesHandler := handlers.NewEpisodeHandler(episodesCollection, serialsCollection)
+	episodesRoutes := router.Group("/episode", sharedMiddlewares.AuthMiddleware(accessTokenSecret))
+	{
+		episodesRoutes.GET("/:id", episodesHandler.GetEpisodeById)
+		episodesRoutes.POST("/", episodesHandler.AddEpisode)
 	}
 
 	port := os.Getenv("PORT")

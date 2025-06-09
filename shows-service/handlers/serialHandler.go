@@ -14,16 +14,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type SerialHandler struct {
+type serialHandler struct {
 	serialsCollection    *mongo.Collection
 	categoriesCollection *mongo.Collection
 }
 
-func NewSerialHandler(serialsCollection *mongo.Collection, categoriesCollection *mongo.Collection) *SerialHandler {
-	return &SerialHandler{serialsCollection: serialsCollection, categoriesCollection: categoriesCollection}
+func NewSerialHandler(serialsCollection *mongo.Collection, categoriesCollection *mongo.Collection) *serialHandler {
+	return &serialHandler{serialsCollection: serialsCollection, categoriesCollection: categoriesCollection}
 }
 
-func (h *SerialHandler) SearchSerials(c *gin.Context) {
+func (h *serialHandler) SearchSerials(c *gin.Context) {
 	var searchRequest models.SearchSerialsQuery
 	err := c.ShouldBindJSON(&searchRequest)
 	if err != nil {
@@ -34,7 +34,7 @@ func (h *SerialHandler) SearchSerials(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	serialsCursor, err := h.serialsCollection.Find(ctx, bson.M{"$or": []interface{}{bson.M{"title": bson.M{"$regex": searchRequest.Title}}, bson.M{"categories": bson.M{"$in": searchRequest.Categories}}}})
+	serialsCursor, err := h.serialsCollection.Find(ctx, bson.M{"$or": []interface{}{bson.M{"title": bson.M{"$regex": searchRequest.Title}}, bson.M{"categories": bson.M{"$in": searchRequest.Categories}}}}) // TODO finish search logic
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Error receiving serials from DB"})
 		return
@@ -50,7 +50,7 @@ func (h *SerialHandler) SearchSerials(c *gin.Context) {
 	c.JSON(http.StatusOK, foundSerials)
 }
 
-func (h *SerialHandler) AddSerial(c *gin.Context) {
+func (h *serialHandler) AddSerial(c *gin.Context) {
 	var addCommand models.AddSerialCommand
 	err := c.ShouldBindJSON(&addCommand)
 	if err != nil {
@@ -86,6 +86,7 @@ func (h *SerialHandler) AddSerial(c *gin.Context) {
 		Title:       addCommand.Title,
 		Description: addCommand.Description,
 		Categories:  addCommand.Categories,
+		Seasons:     0,
 	}
 
 	result, err := h.serialsCollection.InsertOne(ctx, serialToAdd)

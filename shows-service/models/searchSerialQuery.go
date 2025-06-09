@@ -3,8 +3,8 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type SearchSerialsQuery struct {
-	Title      string   `bson:"name" json:"name"`
-	Categories []string `bson:"categories" json:"categories"`
+	Title      string   `json:"title"`
+	Categories []string `json:"categories"`
 }
 
 type SearchSerialsQueryResponse struct {
