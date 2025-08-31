@@ -15,18 +15,7 @@ func Migrate_v1() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	mongoSession, err := db.GetSession()
-	if err != nil {
-		return err
-	}
-
-	defer mongoSession.EndSession(ctx)
-
-	err = mongo.WithSession(ctx, mongoSession, func(sc mongo.SessionContext) error {
-		if err := mongoSession.StartTransaction(); err != nil {
-			return err
-		}
-
+	return db.RunTransaction(ctx, func(sc mongo.SessionContext) error {
 		_, err := db.GetCollection(db.SerialsCollection).Indexes().CreateMany(sc, []mongo.IndexModel{
 			{
 				Keys:    bson.D{{Key: "title", Value: 1}},
@@ -37,9 +26,7 @@ func Migrate_v1() error {
 				Options: options.Index().SetName("categories_idx"),
 			},
 		})
-
 		if err != nil {
-			_ = mongoSession.AbortTransaction(sc)
 			return err
 		}
 
@@ -49,9 +36,7 @@ func Migrate_v1() error {
 				Options: options.Index().SetName("name_idx").SetUnique(true),
 			},
 		})
-
 		if err != nil {
-			_ = mongoSession.AbortTransaction(sc)
 			return err
 		}
 
@@ -61,16 +46,12 @@ func Migrate_v1() error {
 				Options: options.Index().SetName("serialId_idx"),
 			},
 		})
-
 		if err != nil {
-			_ = mongoSession.AbortTransaction(sc)
 			return err
 		}
 
-		catCount, err := db.GetCollection(db.CategoriesCollection).CountDocuments(ctx, bson.D{})
-
+		catCount, err := db.GetCollection(db.CategoriesCollection).CountDocuments(sc, bson.D{})
 		if err != nil {
-			_ = mongoSession.AbortTransaction(sc)
 			return err
 		}
 
@@ -82,19 +63,11 @@ func Migrate_v1() error {
 				models.Category{ID: 4, Name: "adventure"},
 				models.Category{ID: 5, Name: "survival"},
 			})
-
 			if err != nil {
-				_ = mongoSession.AbortTransaction(sc)
 				return err
 			}
 		}
 
-		if err := mongoSession.CommitTransaction(sc); err != nil {
-			return err
-		}
-
 		return nil
 	})
-
-	return err
 }

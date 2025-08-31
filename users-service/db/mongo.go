@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -38,11 +39,6 @@ func ConnectDb(uri string) error {
 	return nil
 }
 
-func GetSession() (mongo.Session, error) {
-	sessionOptions := options.Session().SetDefaultReadPreference(readpref.Primary())
-	return mongoDbClient.StartSession(sessionOptions)
-}
-
 func DisconnectDb() {
 	if mongoDbClient == nil {
 		return
@@ -54,4 +50,37 @@ func DisconnectDb() {
 
 func GetCollection(collectionName string) *mongo.Collection {
 	return mongoDbClient.Database(DbName).Collection(collectionName)
+}
+
+func RunTransaction(ctx context.Context, txnFunc func(sessCtx mongo.SessionContext) error) error {
+	if mongoDbClient == nil {
+		return fmt.Errorf("MongoDB client is not initialized")
+	}
+
+	sessionOptions := options.Session().SetDefaultReadPreference(readpref.Primary())
+	session, err := mongoDbClient.StartSession(sessionOptions)
+	if err != nil {
+		return fmt.Errorf("failed to start session: %w", err)
+	}
+	defer session.EndSession(ctx)
+
+	err = session.StartTransaction()
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	sessCtx := mongo.NewSessionContext(ctx, session)
+	err = txnFunc(sessCtx)
+	if err != nil {
+		if abortErr := session.AbortTransaction(sessCtx); abortErr != nil {
+			return fmt.Errorf("failed to abort transaction: %w", abortErr)
+		}
+		return fmt.Errorf("transaction failed: %w", err)
+	}
+
+	if commitErr := session.CommitTransaction(sessCtx); commitErr != nil {
+		return fmt.Errorf("failed to commit transaction: %w", commitErr)
+	}
+
+	return nil
 }

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -34,19 +34,9 @@ func (h *episodeHandler) AddEpisode(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	session, err := db.GetSession()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Was not able to start DB session"})
-		return
-	}
-
 	newEpId := primitive.NewObjectID()
 
-	err = mongo.WithSession(ctx, session, func(sc mongo.SessionContext) error {
-		if err := session.StartTransaction(); err != nil {
-			return errors.New("was not able to start DB transaction")
-		}
-
+	err = db.RunTransaction(ctx, func(sc mongo.SessionContext) error {
 		e := models.Episode{
 			ID:          newEpId,
 			Name:        aec.Name,
@@ -57,28 +47,21 @@ func (h *episodeHandler) AddEpisode(c *gin.Context) {
 		}
 
 		if _, err := h.episodesCollection.InsertOne(sc, e); err != nil {
-			_ = session.AbortTransaction(sc)
 			return err
 		}
 
 		var s models.Serial
-		err = h.serialsCollection.FindOne(ctx, bson.M{"_id": aec.SerialId}).Decode(&s)
+		err := h.serialsCollection.FindOne(sc, bson.M{"_id": aec.SerialId}).Decode(&s)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not find serial with specified id: %w", err)
 		}
 
 		if s.Seasons < aec.Season {
 			s.Seasons = aec.Season
 			_, err = h.serialsCollection.ReplaceOne(sc, bson.M{"_id": s.ID}, s)
-
 			if err != nil {
-				_ = session.AbortTransaction(sc)
-				return err
+				return fmt.Errorf("failed to update serial: %w", err)
 			}
-		}
-
-		if err := session.CommitTransaction(sc); err != nil {
-			return err
 		}
 
 		return nil
