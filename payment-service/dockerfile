@@ -1,0 +1,28 @@
+FROM golang:1.24-alpine AS builder
+
+ENV GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /app
+
+RUN mkdir payment-service
+
+COPY payment-service/go.mod ./payment-service
+COPY payment-service/go.sum ./payment-service
+COPY shared ./shared
+
+WORKDIR /app/payment-service
+
+RUN go mod download
+
+COPY payment-service/ ./
+
+RUN go build -o server main.go
+
+FROM alpine:latest
+
+WORKDIR /root/
+COPY --from=builder /app/payment-service/server ./
+
+EXPOSE 8082
+CMD ["./server"]
