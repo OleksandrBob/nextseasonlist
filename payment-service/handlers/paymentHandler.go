@@ -12,15 +12,16 @@ import (
 )
 
 type PaymentHandler struct {
+	paymentpb.UnimplementedPaymentServiceServer
 	PaymentCollection *mongo.Collection
 }
 
 func NewPaymentHandler(paymentCollection *mongo.Collection) *PaymentHandler {
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 	return &PaymentHandler{PaymentCollection: paymentCollection}
 }
 
 func (h *PaymentHandler) CreateStripeCustomer(ctx context.Context, req *paymentpb.CreateStripeCustomerRequest) (*paymentpb.CreateStripeCustomerResponse, error) {
-	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 	params := &stripe.CustomerParams{
 		Email: stripe.String(req.Email),
 		Name:  stripe.String(req.FirstName + " " + req.LastName),

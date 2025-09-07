@@ -56,7 +56,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	}
 	defer conn.Close()
 	client := paymentpb.NewPaymentServiceClient(conn)
-	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer grpcCancel()
 	resp, err := client.CreateStripeCustomer(grpcCtx, &paymentpb.CreateStripeCustomerRequest{
 		Email:     registerUserDto.Email,
