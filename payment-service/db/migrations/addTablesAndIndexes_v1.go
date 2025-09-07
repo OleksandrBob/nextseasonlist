@@ -2,8 +2,9 @@ package migrations
 
 import (
 	"context"
-	"payment-service/db"
 	"time"
+
+	"github.com/OleksandrBob/nextseasonlist/payment-service/db"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

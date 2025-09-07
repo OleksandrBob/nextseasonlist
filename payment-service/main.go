@@ -5,8 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"payment-service/db"
-	"payment-service/db/migrations"
+
+	"github.com/OleksandrBob/nextseasonlist/payment-service/db"
+	"github.com/OleksandrBob/nextseasonlist/payment-service/db/migrations"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"

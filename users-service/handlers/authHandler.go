@@ -6,6 +6,10 @@ import (
 	"os"
 	"time"
 
+	paymentpb "github.com/OleksandrBob/nextseasonlist/users-service/proto/payment"
+
+	"google.golang.org/grpc"
+
 	"github.com/OleksandrBob/nextseasonlist/users-service/models"
 	"github.com/OleksandrBob/nextseasonlist/users-service/utils"
 	"github.com/gin-gonic/gin"
@@ -35,7 +39,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var existingUser models.User
@@ -45,6 +49,26 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
+	conn, err := grpc.NewClient("payment-service:8082", grpc.WithInsecure())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not connect to payment service"})
+		return
+	}
+	defer conn.Close()
+	client := paymentpb.NewPaymentServiceClient(conn)
+	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer grpcCancel()
+	resp, err := client.CreateStripeCustomer(grpcCtx, &paymentpb.CreateStripeCustomerRequest{
+		Email:     registerUserDto.Email,
+		FirstName: registerUserDto.FirstName,
+		LastName:  registerUserDto.LastName,
+	})
+	if err != nil || resp.Error != "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create stripe customer"})
+		return
+	}
+	stripeCustomerId := resp.StripeCustomerId
+
 	hashedPassword, err := utils.GenerateFromPassword(registerUserDto.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error hashing password"})
@@ -52,12 +76,13 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	}
 
 	userToCreate := models.User{
-		ID:        primitive.NewObjectID(),
-		Password:  hashedPassword,
-		FirstName: registerUserDto.FirstName,
-		LastName:  registerUserDto.LastName,
-		Email:     registerUserDto.Email,
-		Roles:     []string{sharedUtils.UserRole},
+		ID:               primitive.NewObjectID(),
+		Password:         hashedPassword,
+		FirstName:        registerUserDto.FirstName,
+		LastName:         registerUserDto.LastName,
+		Email:            registerUserDto.Email,
+		Roles:            []string{sharedUtils.UserRole},
+		StripeCustomerId: stripeCustomerId,
 	}
 
 	_, err = h.UserCollection.InsertOne(ctx, userToCreate)
@@ -66,7 +91,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully", "stripeCustomerId": stripeCustomerId})
 }
 
 func (h *AuthHandler) LoginUser(c *gin.Context) {

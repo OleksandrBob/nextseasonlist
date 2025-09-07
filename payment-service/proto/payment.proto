@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "./payment";
+
+service PaymentService {
+  rpc CreateStripeCustomer (CreateStripeCustomerRequest) returns (CreateStripeCustomerResponse);
+}
+
+message CreateStripeCustomerRequest {
+  string email = 1;
+  string first_name = 2;
+  string last_name = 3;
+}
+
+message CreateStripeCustomerResponse {
+  string stripe_customer_id = 1;
+  string error = 2;
+}

@@ -1,4 +1,4 @@
-module payment-service
+module github.com/OleksandrBob/nextseasonlist/payment-service
 
 go 1.24.0
 
@@ -7,7 +7,10 @@ replace github.com/OleksandrBob/nextseasonlist/shared => ../shared
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/joho/godotenv v1.5.1
+	github.com/stripe/stripe-go/v82 v82.5.0
 	go.mongodb.org/mongo-driver v1.17.2
+	google.golang.org/grpc v1.75.0
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
@@ -37,11 +40,11 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	golang.org/x/arch v0.13.0 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/protobuf v1.36.4 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
