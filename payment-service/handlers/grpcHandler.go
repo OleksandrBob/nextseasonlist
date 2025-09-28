@@ -14,17 +14,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type PaymentHandler struct {
+type GrpcHandler struct {
 	paymentpb.UnimplementedPaymentServiceServer
 	PaymentCustomersCollection *mongo.Collection
 }
 
-func NewPaymentHandler(paymentCollection *mongo.Collection) *PaymentHandler {
+func NewGrpcHandler(paymentCollection *mongo.Collection) *GrpcHandler {
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
-	return &PaymentHandler{PaymentCustomersCollection: paymentCollection}
+	return &GrpcHandler{PaymentCustomersCollection: paymentCollection}
 }
 
-func (h *PaymentHandler) CreateStripeCustomer(ctx context.Context, req *paymentpb.CreateStripeCustomerRequest) (*paymentpb.CreateStripeCustomerResponse, error) {
+func (h *GrpcHandler) CreateStripeCustomer(ctx context.Context, req *paymentpb.CreateStripeCustomerRequest) (*paymentpb.CreateStripeCustomerResponse, error) {
 	var existingCustomer models.PaymentCustomer
 	err := h.PaymentCustomersCollection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&existingCustomer)
 	if err == nil {

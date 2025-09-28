@@ -12,6 +12,8 @@ import (
 	"github.com/OleksandrBob/nextseasonlist/payment-service/handlers"
 	paymentpb "github.com/OleksandrBob/nextseasonlist/payment-service/proto/payment"
 
+	sharedMiddlewares "github.com/OleksandrBob/nextseasonlist/shared/middlewares"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
@@ -42,6 +44,8 @@ func main() {
 		return
 	}
 
+	pcc := db.GetCollection(db.PaymentCustomersCollection)
+
 	grpcPort := os.Getenv("GRPC_PORT")
 	if grpcPort == "" {
 		grpcPort = "8083"
@@ -51,8 +55,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	paymentHandler := handlers.NewPaymentHandler(db.GetCollection(db.PaymentCustomersCollection))
-	paymentpb.RegisterPaymentServiceServer(grpcServer, paymentHandler)
+	grpcHandler := handlers.NewGrpcHandler(pcc)
+	paymentpb.RegisterPaymentServiceServer(grpcServer, grpcHandler)
 	log.Printf("Payment GRPC server listening on port %s", grpcPort)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
@@ -61,15 +65,21 @@ func main() {
 	}()
 
 	router := gin.Default()
+	httpHandler := handlers.NewHttpHandler(pcc)
+	clientRoutes := router.Group("/client", sharedMiddlewares.AuthMiddleware([]byte(os.Getenv("ACCESS_TOKEN_SECRET"))))
+	{
+		clientRoutes.GET("/payment-session", httpHandler.GetPaymentSession)
+	}
+
 	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, "Hello world")
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8082"
+	httpPort := os.Getenv("PORT")
+	if httpPort == "" {
+		httpPort = "8082"
 	}
 
-	log.Println("Payment-Server running on port: ", port)
-	router.Run(":" + port)
+	log.Println("Payment-Server running on port: ", httpPort)
+	router.Run(":" + httpPort)
 }

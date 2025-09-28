@@ -39,6 +39,7 @@ services:
       - PORT=8082
       - HOST_URL=localhost
       - MONGO_URI=${MONGO_URI}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
     depends_on:

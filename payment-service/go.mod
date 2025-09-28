@@ -5,6 +5,7 @@ go 1.24.0
 replace github.com/OleksandrBob/nextseasonlist/shared => ../shared
 
 require (
+	github.com/OleksandrBob/nextseasonlist/shared v0.0.1
 	github.com/gin-gonic/gin v1.10.1
 	github.com/joho/godotenv v1.5.1
 	github.com/stripe/stripe-go/v82 v82.5.0
@@ -17,6 +18,7 @@ require (
 	github.com/bytedance/sonic v1.12.8 // indirect
 	github.com/bytedance/sonic/loader v0.2.3 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
