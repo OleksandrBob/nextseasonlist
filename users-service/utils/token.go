@@ -12,19 +12,19 @@ func GenerateAccessToken(userID string, userRoles []string) (string, error) {
 	calims := jwt.MapClaims{
 		UserIdClaim:     userID,
 		RolesClaim:      userRoles,
-		ExpirationClaim: time.Now().Add(AccessTokenDurationTime).Unix(),
+		ExpirationClaim: time.Now().UTC().Add(AccessTokenDurationTime).Unix(),
 	}
 
 	return generateToken(calims, []byte(os.Getenv("ACCESS_TOKEN_SECRET")))
 }
 
 func GenerateRefreshToken(userID string) (string, error) {
-	calims := jwt.MapClaims{
+	claims := jwt.MapClaims{
 		UserIdClaim:     userID,
-		ExpirationClaim: time.Now().Add(RefreshTokenDurationTime).Unix(),
+		ExpirationClaim: time.Now().UTC().Add(RefreshTokenDurationTime).Unix(),
 	}
 
-	return generateToken(calims, []byte(os.Getenv("REFRESH_TOKEN_SECRET")))
+	return generateToken(claims, []byte(os.Getenv("REFRESH_TOKEN_SECRET")))
 }
 
 func generateToken(claims jwt.MapClaims, secret []byte) (string, error) {

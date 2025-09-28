@@ -10,4 +10,5 @@ type User struct {
 	Password         string             `bson:"password" json:"password" binding:"required,min=6"`
 	Roles            []string           `bson:"roles" json:"roles" binding:"required"`
 	StripeCustomerId string             `bson:"stripeCustomerId" json:"stripeCustomerId"`
+	UsagePlan        int16              `bson:"usagePlan" json:"usagePlan"`
 }

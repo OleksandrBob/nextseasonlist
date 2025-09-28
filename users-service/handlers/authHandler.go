@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -9,6 +10,7 @@ import (
 	paymentpb "github.com/OleksandrBob/nextseasonlist/users-service/proto/payment"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/OleksandrBob/nextseasonlist/users-service/models"
 	"github.com/OleksandrBob/nextseasonlist/users-service/utils"
@@ -49,24 +51,32 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	conn, err := grpc.NewClient("payment-service:8082", grpc.WithInsecure())
+	psUrl := os.Getenv("PAYMENT_SERVICE_GRPC")
+	log.Println(psUrl)
+
+	conn, err := grpc.NewClient(psUrl, grpc.WithTransportCredentials(insecure.NewCredentials())) // TODO: check what is this
 	if err != nil {
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not connect to payment service"})
 		return
 	}
 	defer conn.Close()
+
 	client := paymentpb.NewPaymentServiceClient(conn)
 	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer grpcCancel()
+
 	resp, err := client.CreateStripeCustomer(grpcCtx, &paymentpb.CreateStripeCustomerRequest{
 		Email:     registerUserDto.Email,
 		FirstName: registerUserDto.FirstName,
 		LastName:  registerUserDto.LastName,
 	})
 	if err != nil || resp.Error != "" {
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create stripe customer"})
 		return
 	}
+
 	stripeCustomerId := resp.StripeCustomerId
 
 	hashedPassword, err := utils.GenerateFromPassword(registerUserDto.Password)
@@ -77,12 +87,13 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 
 	userToCreate := models.User{
 		ID:               primitive.NewObjectID(),
-		Password:         hashedPassword,
+		Email:            registerUserDto.Email,
 		FirstName:        registerUserDto.FirstName,
 		LastName:         registerUserDto.LastName,
-		Email:            registerUserDto.Email,
 		Roles:            []string{sharedUtils.UserRole},
+		UsagePlan:        sharedUtils.FreePlan,
 		StripeCustomerId: stripeCustomerId,
+		Password:         hashedPassword,
 	}
 
 	_, err = h.UserCollection.InsertOne(ctx, userToCreate)

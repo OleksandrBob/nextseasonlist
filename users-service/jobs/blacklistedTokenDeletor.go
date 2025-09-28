@@ -20,7 +20,7 @@ func (d *blacklistedTokenDeletor) deleteExpiredBlacklistedTokens() {
 	ctx, cancel := context.WithTimeout(context.Background(), utils.JobMaxDurationTime)
 	defer cancel()
 
-	_, err := d.tokenBlacklistCollection.DeleteMany(ctx, bson.D{{Key: "expires_at", Value: bson.D{{Key: "$lt", Value: time.Now()}}}})
+	_, err := d.tokenBlacklistCollection.DeleteMany(ctx, bson.D{{Key: "expires_at", Value: bson.D{{Key: "$lt", Value: time.Now().UTC()}}}})
 
 	if err != nil {
 		log.Println("Failed to cleanup expired tokens:", err)

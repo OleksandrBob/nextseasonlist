@@ -10,3 +10,9 @@ const (
 	UserRole  = "user"
 	AdminRole = "admin"
 )
+
+const (
+	FreePlan  = 0
+	BasicPlan = 1
+	ProPlan   = 2
+)

@@ -8,6 +8,7 @@ services:
       - PORT=8080
       - HOST_URL=localhost
       - MONGO_URI=${MONGO_URI}
+      - PAYMENT_SERVICE_GRPC=${PAYMENT_SERVICE_GRPC}
       - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
       - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
     depends_on:
@@ -64,6 +65,8 @@ services:
     ports:
       - "27018:27018"
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: always
     volumes:
       - mongo_data2:/data/db

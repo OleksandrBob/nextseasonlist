@@ -42,7 +42,6 @@ func main() {
 		return
 	}
 
-	// Start GRPC server
 	grpcPort := os.Getenv("GRPC_PORT")
 	if grpcPort == "" {
 		grpcPort = "8083"
@@ -61,7 +60,6 @@ func main() {
 		}
 	}()
 
-	// Optionally keep HTTP server for health checks
 	router := gin.Default()
 	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, "Hello world")

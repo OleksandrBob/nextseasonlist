@@ -3,25 +3,37 @@ package handlers
 import (
 	context "context"
 	"os"
+	"time"
 
+	"github.com/OleksandrBob/nextseasonlist/payment-service/models"
 	paymentpb "github.com/OleksandrBob/nextseasonlist/payment-service/proto/payment"
 
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/customer"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type PaymentHandler struct {
 	paymentpb.UnimplementedPaymentServiceServer
-	PaymentCollection *mongo.Collection
+	PaymentCustomersCollection *mongo.Collection
 }
 
 func NewPaymentHandler(paymentCollection *mongo.Collection) *PaymentHandler {
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
-	return &PaymentHandler{PaymentCollection: paymentCollection}
+	return &PaymentHandler{PaymentCustomersCollection: paymentCollection}
 }
 
 func (h *PaymentHandler) CreateStripeCustomer(ctx context.Context, req *paymentpb.CreateStripeCustomerRequest) (*paymentpb.CreateStripeCustomerResponse, error) {
+	var existingCustomer models.PaymentCustomer
+	err := h.PaymentCustomersCollection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&existingCustomer)
+	if err == nil {
+		return &paymentpb.CreateStripeCustomerResponse{StripeCustomerId: existingCustomer.StripeCustomerID}, nil
+	}
+	if err != mongo.ErrNoDocuments {
+		return &paymentpb.CreateStripeCustomerResponse{Error: err.Error()}, err
+	}
+
 	params := &stripe.CustomerParams{
 		Email: stripe.String(req.Email),
 		Name:  stripe.String(req.FirstName + " " + req.LastName),
@@ -30,5 +42,18 @@ func (h *PaymentHandler) CreateStripeCustomer(ctx context.Context, req *paymentp
 	if err != nil {
 		return &paymentpb.CreateStripeCustomerResponse{Error: err.Error()}, nil
 	}
+
+	now := time.Now().UTC().Unix()
+	paymentCustomer := models.PaymentCustomer{
+		Email:            req.Email,
+		StripeCustomerID: cust.ID,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+	_, insertErr := h.PaymentCustomersCollection.InsertOne(ctx, paymentCustomer)
+	if insertErr != nil {
+		return &paymentpb.CreateStripeCustomerResponse{Error: insertErr.Error()}, nil
+	}
+
 	return &paymentpb.CreateStripeCustomerResponse{StripeCustomerId: cust.ID}, nil
 }
