@@ -11,6 +11,7 @@ import (
 	"github.com/OleksandrBob/nextseasonlist/payment-service/db/migrations"
 	"github.com/OleksandrBob/nextseasonlist/payment-service/handlers"
 	paymentpb "github.com/OleksandrBob/nextseasonlist/payment-service/proto/payment"
+	"github.com/stripe/stripe-go/v82"
 
 	sharedMiddlewares "github.com/OleksandrBob/nextseasonlist/shared/middlewares"
 
@@ -25,6 +26,8 @@ func main() {
 	if err != nil {
 		log.Println("Warning: .env file not found, using system enviromant variables")
 	}
+
+	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
 	mongoUri := os.Getenv("MONGO_URI")
 	if mongoUri == "" {

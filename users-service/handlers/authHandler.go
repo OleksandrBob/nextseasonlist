@@ -52,7 +52,6 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	}
 
 	psUrl := os.Getenv("PAYMENT_SERVICE_GRPC")
-	log.Println(psUrl)
 
 	conn, err := grpc.NewClient(psUrl, grpc.WithTransportCredentials(insecure.NewCredentials())) // TODO: check what is this
 	if err != nil {
@@ -66,7 +65,10 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	grpcCtx, grpcCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer grpcCancel()
 
+	newUserId := primitive.NewObjectID()
+
 	resp, err := client.CreateStripeCustomer(grpcCtx, &paymentpb.CreateStripeCustomerRequest{
+		UserId:    newUserId.Hex(),
 		Email:     registerUserDto.Email,
 		FirstName: registerUserDto.FirstName,
 		LastName:  registerUserDto.LastName,
@@ -86,7 +88,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	}
 
 	userToCreate := models.User{
-		ID:               primitive.NewObjectID(),
+		ID:               newUserId,
 		Email:            registerUserDto.Email,
 		FirstName:        registerUserDto.FirstName,
 		LastName:         registerUserDto.LastName,

@@ -26,6 +26,7 @@ type CreateStripeCustomerRequest struct {
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	FirstName     string                 `protobuf:"bytes,2,opt,name=first_name,json=firstName,proto3" json:"first_name,omitempty"`
 	LastName      string                 `protobuf:"bytes,3,opt,name=last_name,json=lastName,proto3" json:"last_name,omitempty"`
+	UserId        string                 `protobuf:"bytes,4,opt,name=userId,proto3" json:"userId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -77,6 +78,13 @@ func (x *CreateStripeCustomerRequest) GetFirstName() string {
 func (x *CreateStripeCustomerRequest) GetLastName() string {
 	if x != nil {
 		return x.LastName
+	}
+	return ""
+}
+
+func (x *CreateStripeCustomerRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -137,12 +145,13 @@ var File_payment_proto protoreflect.FileDescriptor
 
 const file_payment_proto_rawDesc = "" +
 	"\n" +
-	"\rpayment.proto\x12\apayment\"o\n" +
+	"\rpayment.proto\x12\apayment\"\x87\x01\n" +
 	"\x1bCreateStripeCustomerRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1d\n" +
 	"\n" +
 	"first_name\x18\x02 \x01(\tR\tfirstName\x12\x1b\n" +
-	"\tlast_name\x18\x03 \x01(\tR\blastName\"b\n" +
+	"\tlast_name\x18\x03 \x01(\tR\blastName\x12\x16\n" +
+	"\x06userId\x18\x04 \x01(\tR\x06userId\"b\n" +
 	"\x1cCreateStripeCustomerResponse\x12,\n" +
 	"\x12stripe_customer_id\x18\x01 \x01(\tR\x10stripeCustomerId\x12\x14\n" +
 	"\x05error\x18\x02 \x01(\tR\x05error2u\n" +

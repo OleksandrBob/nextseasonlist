@@ -27,8 +27,12 @@ func Migrate_v1() error {
 					Options: options.Index().SetName("subscriptionId_idx").SetUnique(true),
 				},
 				{
+					Keys:    bson.D{{Key: "userId", Value: 1}},
+					Options: options.Index().SetName("userId_idx").SetUnique(true),
+				},
+				{
 					Keys:    bson.D{{Key: "email", Value: 1}},
-					Options: options.Index().SetName("email_idx").SetUnique(true),
+					Options: options.Index().SetName("email_idx"),
 				},
 			})
 		if err != nil {

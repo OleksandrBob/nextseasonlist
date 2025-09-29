@@ -2,7 +2,6 @@ package handlers
 
 import (
 	context "context"
-	"os"
 	"time"
 
 	"github.com/OleksandrBob/nextseasonlist/payment-service/models"
@@ -11,6 +10,7 @@ import (
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/customer"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -20,13 +20,17 @@ type GrpcHandler struct {
 }
 
 func NewGrpcHandler(paymentCollection *mongo.Collection) *GrpcHandler {
-	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 	return &GrpcHandler{PaymentCustomersCollection: paymentCollection}
 }
 
 func (h *GrpcHandler) CreateStripeCustomer(ctx context.Context, req *paymentpb.CreateStripeCustomerRequest) (*paymentpb.CreateStripeCustomerResponse, error) {
+	userID, err := primitive.ObjectIDFromHex(req.UserId)
+	if err != nil {
+		return &paymentpb.CreateStripeCustomerResponse{Error: "Invalid user ID"}, nil
+	}
+
 	var existingCustomer models.PaymentCustomer
-	err := h.PaymentCustomersCollection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&existingCustomer)
+	err = h.PaymentCustomersCollection.FindOne(ctx, bson.M{"userId": userID}).Decode(&existingCustomer)
 	if err == nil {
 		return &paymentpb.CreateStripeCustomerResponse{StripeCustomerId: existingCustomer.StripeCustomerID}, nil
 	}
@@ -45,6 +49,7 @@ func (h *GrpcHandler) CreateStripeCustomer(ctx context.Context, req *paymentpb.C
 
 	now := time.Now().UTC().Unix()
 	paymentCustomer := models.PaymentCustomer{
+		UserID:           userID,
 		Email:            req.Email,
 		StripeCustomerID: cust.ID,
 		CreatedAt:        now,

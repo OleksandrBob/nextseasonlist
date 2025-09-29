@@ -12,6 +12,7 @@ message CreateStripeCustomerRequest {
   string email = 1;
   string first_name = 2;
   string last_name = 3;
+  string userId = 4;
 }
 
 message CreateStripeCustomerResponse {
