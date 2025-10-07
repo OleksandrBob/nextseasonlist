@@ -69,9 +69,17 @@ func main() {
 
 	router := gin.Default()
 	httpHandler := handlers.NewHttpHandler(pcc)
+	webhookHandler := handlers.NewWebhookHandler(pcc)
+
 	clientRoutes := router.Group("/client", sharedMiddlewares.AuthMiddleware([]byte(os.Getenv("ACCESS_TOKEN_SECRET"))))
 	{
 		clientRoutes.GET("/payment-session", httpHandler.GetPaymentSession)
+		clientRoutes.GET("/subscription-status/:customerId", httpHandler.GetCustomerSubscriptionStatus)
+	}
+
+	webhookRoutes := router.Group("/webhook")
+	{
+		webhookRoutes.POST("/stripe", webhookHandler.HandleStripeWebhook)
 	}
 
 	router.GET("/test", func(c *gin.Context) {

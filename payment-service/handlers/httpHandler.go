@@ -58,3 +58,37 @@ func (h *HttpHandler) GetPaymentSession(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"client_secret": sess.ClientSecret})
 }
+
+func (h *HttpHandler) GetCustomerSubscriptionStatus(c *gin.Context) {
+	customerID := c.Param("customerId")
+	if customerID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer ID is required"})
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(customerID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid customer ID format"})
+		return
+	}
+
+	var customer models.PaymentCustomer
+	err = h.PaymentCustomersCollection.FindOne(c.Request.Context(), bson.M{"userId": objectID}).Decode(&customer)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	response := gin.H{
+		"customerId":         customer.ID,
+		"subscriptionStatus": customer.SubscriptionStatus,
+		"usagePlan":          customer.UsagePlan,
+		"planId":             customer.PlanID,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
