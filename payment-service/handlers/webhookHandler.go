@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/OleksandrBob/nextseasonlist/payment-service/constants"
+	"github.com/OleksandrBob/nextseasonlist/payment-service/models"
 	"github.com/gin-gonic/gin"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/webhook"
@@ -50,7 +52,6 @@ func (h *WebhookHandler) HandleStripeWebhook(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid signature"})
 		return
 	}
-	log.Printf("Constructed event: %+v", event)
 
 	switch event.Type {
 	case "customer.subscription.created":
@@ -78,7 +79,7 @@ func (h *WebhookHandler) handleSubscriptionCreated(ctx context.Context, event st
 		return
 	}
 
-	log.Printf("Subscription created: %s for customer: %s", subscription.ID, subscription.Customer.ID)
+	log.Printf("Received event to create subscription: %s for customer: %s", subscription.ID, subscription.Customer.ID)
 
 	h.updateCustomerSubscription(ctx, subscription)
 }
@@ -91,7 +92,7 @@ func (h *WebhookHandler) handleSubscriptionUpdated(ctx context.Context, event st
 		return
 	}
 
-	log.Printf("Subscription updated: %s for customer: %s, status: %s",
+	log.Printf("Received event to update subscription: %s for customer: %s, status: %s",
 		subscription.ID, subscription.Customer.ID, subscription.Status)
 
 	h.updateCustomerSubscription(ctx, subscription)
@@ -105,7 +106,7 @@ func (h *WebhookHandler) handleSubscriptionDeleted(ctx context.Context, event st
 		return
 	}
 
-	log.Printf("Subscription deleted: %s for customer: %s", subscription.ID, subscription.Customer.ID)
+	log.Printf("Received event to delete subscription: %s for customer: %s", subscription.ID, subscription.Customer.ID)
 
 	filter := bson.M{"stripeCustomerId": subscription.Customer.ID}
 	update := bson.M{
@@ -131,12 +132,7 @@ func (h *WebhookHandler) handlePaymentSucceeded(ctx context.Context, event strip
 		return
 	}
 
-	// Only handle subscription invoices
-	if invoice.BillingReason != stripe.InvoiceBillingReasonSubscription && // TODO: move this check to a separate method
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionCreate &&
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionCycle &&
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionThreshold &&
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionUpdate {
+	if !isBillingReasonForSubscription(invoice.BillingReason) {
 		return
 	}
 
@@ -166,12 +162,7 @@ func (h *WebhookHandler) handlePaymentFailed(ctx context.Context, event stripe.E
 		return
 	}
 
-	// Only handle subscription invoices
-	if invoice.BillingReason != stripe.InvoiceBillingReasonSubscription &&
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionCreate &&
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionCycle &&
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionThreshold &&
-		invoice.BillingReason != stripe.InvoiceBillingReasonSubscriptionUpdate {
+	if !isBillingReasonForSubscription(invoice.BillingReason) {
 		return
 	}
 
@@ -201,16 +192,15 @@ func (h *WebhookHandler) updateCustomerSubscription(ctx context.Context, subscri
 		planId = subscription.Items.Data[0].Price.ID
 
 		switch planId {
-		case "price_1SCH6JLXxKn9DoPxSLsZLqLf": // TODO: move to env vars
-			usagePlan = 1 // TODO: make consts (like enum)
-		case "price_1SCH6YLXxKn9DoPxZEL9bALL":
-			usagePlan = 2
+		case constants.PriceBasic:
+			usagePlan = models.UsagePlanBasic
+		case constants.PricePro:
+			usagePlan = models.UsagePlanPro
 		default:
-			usagePlan = 0
+			usagePlan = models.UsagePlanFree
 		}
 	}
 
-	// Get payment method ID if available
 	var paymentMethodId string
 	if subscription.DefaultPaymentMethod != nil {
 		paymentMethodId = subscription.DefaultPaymentMethod.ID
@@ -240,4 +230,16 @@ func (h *WebhookHandler) updateCustomerSubscription(ctx context.Context, subscri
 	} else {
 		log.Printf("Updated customer record for Stripe customer: %s", subscription.Customer.ID)
 	}
+}
+
+func isBillingReasonForSubscription(br stripe.InvoiceBillingReason) bool {
+	if br == stripe.InvoiceBillingReasonSubscription ||
+		br == stripe.InvoiceBillingReasonSubscriptionCreate ||
+		br == stripe.InvoiceBillingReasonSubscriptionCycle ||
+		br == stripe.InvoiceBillingReasonSubscriptionThreshold ||
+		br == stripe.InvoiceBillingReasonSubscriptionUpdate {
+		return true
+	}
+
+	return false
 }

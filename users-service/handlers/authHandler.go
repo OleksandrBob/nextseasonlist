@@ -88,14 +88,13 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 	}
 
 	userToCreate := models.User{
-		ID:               newUserId,
-		Email:            registerUserDto.Email,
-		FirstName:        registerUserDto.FirstName,
-		LastName:         registerUserDto.LastName,
-		Roles:            []string{sharedUtils.UserRole},
-		UsagePlan:        sharedUtils.FreePlan,
-		StripeCustomerId: stripeCustomerId,
-		Password:         hashedPassword,
+		ID:        newUserId,
+		Email:     registerUserDto.Email,
+		FirstName: registerUserDto.FirstName,
+		LastName:  registerUserDto.LastName,
+		Roles:     []string{sharedUtils.UserRole},
+		UsagePlan: sharedUtils.FreePlan,
+		Password:  hashedPassword,
 	}
 
 	_, err = h.UserCollection.InsertOne(ctx, userToCreate)
