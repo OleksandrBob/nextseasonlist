@@ -90,9 +90,9 @@ jobs:
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: ${{ vars.ECS_TASK_DEFINITION }}
         container-name: ${{ vars.CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
+        task-definition: users-service/.aws/task-definition.json
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
