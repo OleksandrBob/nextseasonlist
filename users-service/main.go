@@ -39,7 +39,7 @@ func main() {
 	// profileHandler := handlers.NewProfileHandler(userCollection)
 	// authHandler := handlers.NewAuthHandler(userCollection, tokenBlacklistCollection)
 	hand := func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello Bob changed"})
+		c.JSON(http.StatusOK, gin.H{"message": "Hello Sambo"})
 	}
 
 	router := gin.Default()
