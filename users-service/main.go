@@ -39,7 +39,7 @@ func main() {
 	// profileHandler := handlers.NewProfileHandler(userCollection)
 	// authHandler := handlers.NewAuthHandler(userCollection, tokenBlacklistCollection)
 	hand := func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello Bob"})
+		c.JSON(http.StatusOK, gin.H{"message": "Hello Bob changed"})
 	}
 
 	router := gin.Default()
@@ -64,6 +64,6 @@ func main() {
 		port = "80"
 	}
 
-	log.Println("Users-Server running on porttt: ", port)
+	log.Println("Users-Server running on port: ", port)
 	router.Run(":" + port)
 }
