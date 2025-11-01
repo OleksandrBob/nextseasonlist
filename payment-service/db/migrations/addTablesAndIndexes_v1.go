@@ -24,7 +24,7 @@ func Migrate_v1() error {
 				},
 				{
 					Keys:    bson.D{{Key: "subscriptionId", Value: 1}},
-					Options: options.Index().SetName("subscriptionId_idx").SetUnique(true),
+					Options: options.Index().SetName("subscriptionId_idx").SetUnique(false),
 				},
 				{
 					Keys:    bson.D{{Key: "userId", Value: 1}},
