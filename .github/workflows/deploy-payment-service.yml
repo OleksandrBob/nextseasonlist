@@ -1,0 +1,67 @@
+name: Deploy Payment service to Amazon ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Deployment environment'
+        type: choice
+        required: true
+        default: 'production'
+        options:
+          - production
+          - staging
+          - development
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.env }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build a docker container and
+        # push it to ECR so that it can
+        # be deployed to ECS.
+        docker build -t $ECR_REGISTRY/${{ vars.PAYMENT_ECR_REPOSITORY }}:$IMAGE_TAG -f ./payment-service/dockerfile .
+        docker push $ECR_REGISTRY/${{ vars.PAYMENT_ECR_REPOSITORY }}:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/${{ vars.PAYMENT_ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        container-name: ${{ vars.PAYMENT_CONTAINER_NAME }}
+        image: ${{ steps.build-image.outputs.image }}
+        task-definition: ./payment-service/.aws/task-definition.json
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ vars.PAYMENT_ECS_SERVICE }}
+        cluster: ${{ vars.ECS_CLUSTER }}
+        wait-for-service-stability: true

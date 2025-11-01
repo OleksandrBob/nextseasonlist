@@ -21,6 +21,7 @@ func main() {
 		fmt.Println("mongo uri is unset")
 		//return
 	}
+	fmt.Println("Mongo URI:", mongoURI)
 
 	// err = db.ConnectDb(mongoURI)
 	// defer db.DisconnectDb()
@@ -61,6 +62,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
+		fmt.Println("Port was unset")
 		port = "8080"
 	}
 
