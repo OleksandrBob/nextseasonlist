@@ -56,7 +56,7 @@ jobs:
       with:
         container-name: ${{ vars.PAYMENT_CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
-        task-definition: ./payment-service/.aws/task-definition.json
+        task-definition: ./payment-service/.aws/nsl-payment-service-task-def.json
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2
