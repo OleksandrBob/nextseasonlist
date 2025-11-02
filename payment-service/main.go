@@ -83,6 +83,8 @@ func main() {
 			return
 		}
 		defer resp.Body.Close()
+		fmt.Println("successfull execution in payment service")
+
 		c.JSON(http.StatusOK, gin.H{"accessed": resp.StatusCode == http.StatusOK})
 	})
 

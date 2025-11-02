@@ -46,6 +46,20 @@ func main() {
 	router := gin.Default()
 	router.GET("/", hand)
 
+	paymentServUri := os.Getenv("PAYMENT_SERVICE_URI")
+
+	router.GET("/payment-check", func(c *gin.Context) {
+		resp, err := http.Get(paymentServUri + "/google-check")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"accessed": false, "error": err.Error()})
+			return
+		}
+		defer resp.Body.Close()
+		fmt.Println("successfull execution in users service")
+
+		c.JSON(http.StatusOK, gin.H{"accessed": resp.StatusCode == http.StatusOK})
+	})
+
 	// authRoutes := router.Group("/auth")
 	// {
 	// 	authRoutes.POST("/login", authHandler.LoginUser)
