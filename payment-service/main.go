@@ -73,7 +73,7 @@ func main() {
 	// }
 
 	router.GET("/test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "Hello world for payment")
+		c.JSON(http.StatusOK, "Hello world for payment (2)")
 	})
 
 	router.GET("/google-check", func(c *gin.Context) {
