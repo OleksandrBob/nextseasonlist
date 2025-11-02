@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -57,7 +58,15 @@ func main() {
 		defer resp.Body.Close()
 		fmt.Println("successfull execution in users service")
 
-		c.JSON(http.StatusOK, gin.H{"accessed": resp.StatusCode == http.StatusOK})
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"accessed": false, "error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"accessed": resp.StatusCode == http.StatusOK,
+			"body":     string(bodyBytes),
+		})
 	})
 
 	// authRoutes := router.Group("/auth")

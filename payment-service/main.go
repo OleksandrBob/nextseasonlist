@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -83,9 +84,17 @@ func main() {
 			return
 		}
 		defer resp.Body.Close()
-		fmt.Println("successfull execution in payment service")
+		fmt.Println("successfull execution in payment service BABA")
 
-		c.JSON(http.StatusOK, gin.H{"accessed": resp.StatusCode == http.StatusOK})
+		bodyBytes := make([]byte, 0)
+		if resp.Body != nil {
+			bodyBytes, _ = io.ReadAll(resp.Body)
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"accessed":    resp.StatusCode == http.StatusOK,
+			"status_code": resp.StatusCode,
+			"body":        string(bodyBytes),
+		})
 	})
 
 	httpPort := os.Getenv("PORT")
