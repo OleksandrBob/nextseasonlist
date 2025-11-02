@@ -76,6 +76,16 @@ func main() {
 		c.JSON(http.StatusOK, "Hello world for payment")
 	})
 
+	router.GET("/google-check", func(c *gin.Context) {
+		resp, err := http.Get("https://www.google.com")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"accessed": false, "error": err.Error()})
+			return
+		}
+		defer resp.Body.Close()
+		c.JSON(http.StatusOK, gin.H{"accessed": resp.StatusCode == http.StatusOK})
+	})
+
 	httpPort := os.Getenv("PORT")
 	if httpPort == "" {
 		httpPort = "8082"
