@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"os"
 
+	"math/rand"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -40,8 +43,15 @@ func main() {
 
 	// profileHandler := handlers.NewProfileHandler(userCollection)
 	// authHandler := handlers.NewAuthHandler(userCollection, tokenBlacklistCollection)
+
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(1000000)
+
 	hand := func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello Sambo"})
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "Hello Sambo",
+			"randomNumber": randomNumber,
+		})
 	}
 
 	router := gin.Default()

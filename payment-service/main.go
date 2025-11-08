@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -73,8 +75,14 @@ func main() {
 	// 	webhookRoutes.POST("/stripe", webhookHandler.HandleStripeWebhook)
 	// }
 
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(1000000)
+
 	router.GET("/test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "Hello world for payment (2)")
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "Hello Sambo from payment",
+			"randomNumber": randomNumber,
+		})
 	})
 
 	router.GET("/health", func(c *gin.Context) {
@@ -93,6 +101,7 @@ func main() {
 		}
 		defer resp.Body.Close()
 		fmt.Println("successfull execution in payment service BABA")
+		fmt.Println(randomNumber)
 
 		bodyBytes := make([]byte, 0)
 		if resp.Body != nil {
