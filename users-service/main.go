@@ -69,6 +69,14 @@ func main() {
 		})
 	})
 
+	router.GET("/health", func(c *gin.Context) {
+		fmt.Println("Triggered health check in users service")
+
+		c.JSON(http.StatusOK, gin.H{
+			"body": "all is fine in users service",
+		})
+	})
+
 	// authRoutes := router.Group("/auth")
 	// {
 	// 	authRoutes.POST("/login", authHandler.LoginUser)

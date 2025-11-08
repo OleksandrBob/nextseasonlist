@@ -77,6 +77,14 @@ func main() {
 		c.JSON(http.StatusOK, "Hello world for payment (2)")
 	})
 
+	router.GET("/health", func(c *gin.Context) {
+		fmt.Println("Triggered health check in users service")
+
+		c.JSON(http.StatusOK, gin.H{
+			"body": "all is fine in users service",
+		})
+	})
+
 	router.GET("/google-check", func(c *gin.Context) {
 		resp, err := http.Get("https://www.google.com")
 		if err != nil {
