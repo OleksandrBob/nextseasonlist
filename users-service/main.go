@@ -26,10 +26,12 @@ func main() {
 		log.Println("Warning: .env file not found, using system environment variables")
 	}
 
-	mongoURI := sharedAws.ResolveSecret("MONGO_URI")
+	awsRegion := os.Getenv("AWS_REGION")
+
+	mongoURI := sharedAws.ResolveSecret("MONGO_URI", awsRegion)
 	if mongoURI == "" {
 		fmt.Println("mongo uri is unset")
-		//return
+		return
 	}
 	fmt.Println("Mongo URI:", mongoURI)
 

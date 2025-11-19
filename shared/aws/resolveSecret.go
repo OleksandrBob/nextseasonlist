@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-func ResolveSecret(name string) string {
+func ResolveSecret(name string, region string) string {
 	envSecret := os.Getenv(name)
 	if envSecret != "" {
 		return envSecret
@@ -19,7 +20,7 @@ func ResolveSecret(name string) string {
 
 	fmt.Println(name + " is unset. Trying to read from Secrets manager.")
 
-	config, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("eu-central-1")) // TODO: remove hardcode
+	config, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,5 +37,11 @@ func ResolveSecret(name string) string {
 		log.Fatal(err.Error())
 	}
 
-	return *result.SecretString
+	var secretParsed map[string]string
+	err = json.Unmarshal([]byte(*result.SecretString), &secretParsed)
+	if err != nil {
+		log.Fatal("Failed to parse secret JSON: ", err)
+	}
+
+	return secretParsed[name]
 }
