@@ -57,6 +57,10 @@ jobs:
         container-name: ${{ vars.USERS_CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
         task-definition: ./users-service/.aws/nsl-users-service-task-def.json
+        environment-variables: |
+          AWS_REGION=${{ vars.AWS_REGION }}
+        secrets: |
+          MONGO_URI=${{ secrets.PROD_CONNECTION_ARN }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2

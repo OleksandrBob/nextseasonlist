@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	sharedAws "github.com/OleksandrBob/nextseasonlist/shared/aws"
 	sharedMiddlewares "github.com/OleksandrBob/nextseasonlist/shared/middlewares"
 )
 
@@ -25,7 +26,7 @@ func main() {
 		log.Println("Warning: .env file not found, using system environment variables")
 	}
 
-	mongoURI := os.Getenv("MONGO_URI")
+	mongoURI := sharedAws.ResolveSecret("MONGO_URI")
 	if mongoURI == "" {
 		fmt.Println("mongo uri is unset")
 		//return
