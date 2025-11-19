@@ -8,7 +8,11 @@ import (
 
 func ResolveSecret(name string, region string) string {
 	envSecret := os.Getenv(name)
-	if envSecret != "" {
+	if envSecret == "" {
+		return ""
+	}
+
+	if len(envSecret) > 0 && envSecret[0] != '{' {
 		return envSecret
 	}
 
