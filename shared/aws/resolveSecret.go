@@ -37,6 +37,8 @@ func ResolveSecret(name string, region string) string {
 		log.Fatal(err.Error())
 	}
 
+	fmt.Println("bababa")
+
 	var secretParsed map[string]string
 	err = json.Unmarshal([]byte(*result.SecretString), &secretParsed)
 	if err != nil {
